@@ -143,6 +143,14 @@ class Regressionizer(QuantileRegression):
     # Echo summary
     # ------------------------------------------------------------------
     def echo_data_summary(self, echo: bool=True):
+        """
+        Echo data summary.
+
+        Parameters:
+            echo (bool): Whether to echo the data summary.
+        Returns:
+            Regressionizer: The instance of the Regressionizer class
+        """
         self._value = _five_point_summary_columnwise(self.data)
         if echo:
             _print_summary(self._value)
@@ -162,7 +170,7 @@ class Regressionizer(QuantileRegression):
         **opts: Additional keyword arguments to be passed to the scipy.optimize.linprog() function.
 
         Returns:
-        Regressionizer: The instance of the Regressionizer class with fitted quantiles.
+        Regressionizer: The instance of the Regressionizer class with fitted regression quantiles.
         """
         super(Regressionizer, self).quantile_regression_fit(funcs, probs, **opts)
         self.regression_quantiles = dict(zip(self.probs, self.regression_quantiles))
@@ -190,7 +198,7 @@ class Regressionizer(QuantileRegression):
         **opts: Additional keyword arguments to be passed to the scipy.optimize.linprog() function.
 
         Returns:
-        Regressionizer: The instance of the Regressionizer class with fitted quantiles.
+        Regressionizer: The instance of the Regressionizer class with fitted regression quantiles.
         """
         super(Regressionizer, self).quantile_regression(knots, probs, order, **opts)
         self.regression_quantiles = dict(zip(self.probs, self.regression_quantiles))
@@ -250,6 +258,13 @@ class Regressionizer(QuantileRegression):
     # Outliers
     # ------------------------------------------------------------------
     def outliers(self):
+        """
+        Outliers found using regression quantiles.
+
+        At least two regression quantiles are needed to estimate the outliers. (E.g 0.02 and 0.98.)
+
+        :return: The instance of the Regressionizer class with found outliers.
+        """
         if not (isinstance(self.regression_quantiles, dict) and len(self.regression_quantiles) > 1):
             ValueError("Quantile regression with at least two regression quantiles is expected.")
 
@@ -270,6 +285,16 @@ class Regressionizer(QuantileRegression):
              title="", width=800, height=600,
              date_list_plot: bool = False, epoch_start="1900-01-01",
              **kwargs):
+        """
+        Plot data and regression quantiles.
+        :param title: Title of the plot.
+        :param width: Width of the plot.
+        :param height: Height of the plot.
+        :param date_list_plot: Whether to plot as a date-time series.
+        :param epoch_start: Start of epoch when regressor is in seconds.
+        :param kwargs: Additional keyword arguments to be passed to the plotly's update_layout.
+        :return: The instance of the Regressionizer class.
+        """
         start_date = pandas.Timestamp(epoch_start)
         fig = go.Figure()
 
@@ -305,6 +330,15 @@ class Regressionizer(QuantileRegression):
                        title="", width=800, height=600,
                        epoch_start="1900-01-01",
                        **kwargs):
+        """
+        Plot data and regression quantiles with time/date axis.
+        :param title: Title of the plot.
+        :param width: Width of the plot.
+        :param height: Height of the plot.
+        :param epoch_start: Start of epoch when regressor is in seconds.
+        :param kwargs: Additional keyword arguments to be passed to the plotly's update_layout.
+        :return: The instance of the Regressionizer class.
+        """
         return self.plot(title=title, width=width, height=height,
                          date_list_plot=True, epoch_start=epoch_start,
                          **kwargs)
@@ -316,6 +350,16 @@ class Regressionizer(QuantileRegression):
                       title="", width=800, height=600,
                       date_list_plot: bool = False, epoch_start="1900-01-01",
                       **kwargs):
+        """
+        Plot data and regression quantiles, and outliers.
+        :param title: Title of the plot.
+        :param width: Width of the plot.
+        :param height: Height of the plot.
+        :param date_list_plot: Whether to plot as a date-time series.
+        :param epoch_start: Start of epoch when regressor is in seconds.
+        :param kwargs: Additional keyword arguments to be passed to the plotly's update_layout.'
+        :return: The instance of the Regressionizer class.
+        """
         # Some code refactoring is possible:
         # self.outliers()
 
@@ -376,6 +420,16 @@ class Regressionizer(QuantileRegression):
                     title="", width=800, height=300,
                     date_list_plot: bool = False, epoch_start="1900-01-01",
                     **kwargs):
+        """
+        Plot residual fitting errors for found regression quantiles.
+        :param title: Title of the plot.
+        :param width: Width of the plot.
+        :param height: Height of the plot.
+        :param date_list_plot: Whether to plot as a date-time series.
+        :param epoch_start: Start of epoch when regressor is in seconds.
+        :param kwargs: Additional keyword arguments to be passed to the plotly's update_layout.'
+        :return: The instance of the Regressionizer class.
+        """
         start_date = pandas.Timestamp(epoch_start)
         x = self.data[:, 0]
         xs = self.data[:, 0]
