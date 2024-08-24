@@ -7,6 +7,7 @@ import pandas
 import numpy
 from datetime import datetime, timedelta
 import plotly.graph_objects as go
+import plotly.subplots as sp
 
 
 # ======================================================================
@@ -229,7 +230,8 @@ class Regressionizer(QuantileRegression):
     # ------------------------------------------------------------------
     def plot(self,
              title="", width=800, height=600,
-             date_list_plot: bool = False, epoch_start="1900-01-01", **kwargs):
+             date_list_plot: bool = False, epoch_start="1900-01-01",
+             **kwargs):
         start_date = pandas.Timestamp(epoch_start)
         fig = go.Figure()
 
@@ -272,8 +274,10 @@ class Regressionizer(QuantileRegression):
     # ------------------------------------------------------------------
     # PlotOutliers
     # ------------------------------------------------------------------
-    def plot_outliers(self, title="", width=800, height=600, date_list_plot: bool = False, **kwargs):
-
+    def plot_outliers(self,
+                      title="", width=800, height=600,
+                      date_list_plot: bool = False, epoch_start="1900-01-01",
+                      **kwargs):
         # Some code refactoring is possible:
         # self.outliers()
 
@@ -295,9 +299,57 @@ class Regressionizer(QuantileRegression):
                          },
                         mode={"data": "markers", "bottom outliers": "markers", "top outliers": "markers"},
                         title=title, width=width, height=height,
-                        date_list_plot=date_list_plot,
+                        date_list_plot=date_list_plot, epoch_start=epoch_start,
                         **kwargs)
         return self
+
+    # ------------------------------------------------------------------
+    # Multi-panel plot
+    # ------------------------------------------------------------------
+    def _create_multi_panel_plot_with_segments(self,
+                                               function_dict,
+                                               title = "Error plots", width=800, height=300,
+                                               **kwargs):
+        num_functions = len(function_dict)
+        fig = sp.make_subplots(rows=num_functions, cols=1, subplot_titles=list(function_dict.keys()))
+
+        for i, (name, points) in enumerate(function_dict.items(), start=1):
+            x, y = zip(*points)
+            scatter_trace = go.Scatter(x=x, y=y, mode='markers', name=name)
+            fig.add_trace(scatter_trace, row=i, col=1)
+
+            for xi, yi in zip(x, y):
+                line_trace_x = go.Scatter(x=[xi, xi], y=[0, yi], mode='lines', showlegend=False,
+                                          line=dict(color='gray', dash='solid'))
+                line_trace_y = go.Scatter(x=[xi, xi], y=[yi, 0], mode='lines', showlegend=False,
+                                          line=dict(color='gray', dash='dash'))
+                fig.add_trace(line_trace_x, row=i, col=1)
+                fig.add_trace(line_trace_y, row=i, col=1)
+
+        fig.update_layout(title = title, width=width, height=height * num_functions, **kwargs)
+
+        self._value = fig
+        return self
+
+    # ------------------------------------------------------------------
+    # Error plots
+    # ------------------------------------------------------------------
+    def error_plots(self,
+                    title="", width=800, height=300,
+                    date_list_plot: bool = False, epoch_start="1900-01-01",
+                    **kwargs):
+        start_date = pandas.Timestamp(epoch_start)
+        x = self.data[:, 0]
+        xs = self.data[:, 0]
+        ys = self.data[:, 1]
+        if date_list_plot:
+            xs = start_date + pandas.to_timedelta(xs, unit='s')
+
+        function_dict = { k: [(xs, y - f(x)) for x, xs, y in zip(x, xs, ys)] for k, f in self.regression_quantiles.items()}
+        return self._create_multi_panel_plot_with_segments(function_dict,
+                                                           title=title,
+                                                           width=width, height=height,
+                                                           **kwargs)
 
     # ------------------------------------------------------------------
     # Representation
