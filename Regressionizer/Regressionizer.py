@@ -168,7 +168,7 @@ class Regressionizer(QuantileRegression):
                    date_list_plot=False, epoch_start="1900-01-01",
                    **kwargs):
         fig = go.Figure()
-        epoch_start_date = datetime.strptime(epoch_start, "%Y-%m-%d")
+        start_date = pandas.Timestamp(epoch_start)
 
         if not isinstance(data, dict):
             raise ValueError("The data argument must be a dictionary of DataFrames or numpy arrays.")
@@ -192,9 +192,8 @@ class Regressionizer(QuantileRegression):
                 else:
                     raise ValueError("Unsupported data type in dictionary of time series.")
 
-                if date_list_plot:
-                    if numpy.issubdtype(x.dtype, numpy.number):
-                        x = [epoch_start_date + timedelta(days=int(num)) for num in x]
+                if date_list_plot and numpy.issubdtype(x.dtype, numpy.number):
+                    x = start_date + pandas.to_timedelta(x, unit='s')
 
                 mode2 = "lines"
                 if label in mode_dict:
