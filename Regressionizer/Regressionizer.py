@@ -37,10 +37,13 @@ def _five_point_summary(arr):
         'max': numpy.max(arr)
     }
 
-def _five_point_summary_columnwise(arr):
+def _five_point_summary_columnwise(arr, column_names=('Regressor', 'Value')):
+    if not (isinstance(column_names, list) and len(column_names) >= 2):
+        ValueError("The value of column_names must be a list or tuple of length at least 2.")
+
     summary = {}
     for i in range(arr.shape[1]):
-        summary[f'column_{i+1}'] = {
+        summary[column_names[i]] = {
             'min': numpy.min(arr[:, i]),
             '25%': numpy.percentile(arr[:, i], 25),
             'median': numpy.median(arr[:, i]),
