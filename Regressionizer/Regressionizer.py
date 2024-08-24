@@ -248,14 +248,12 @@ class Regressionizer(QuantileRegression):
     # ------------------------------------------------------------------
     def __str__(self):
         if isinstance(self.data, numpy.ndarray):
-            res = "Regressionizer object with data that has %d records" % self.take_data().shape()
+            res = "Regressionizer object with data that has %d records" % self.take_data().shape[0]
         else:
             res = "Regressionizer object with no data"
 
-        if isinstance(self.regression_quantiles, list) and self.regression_quantiles > 0:
-            res = res + f" and {self.regression_quantiles} regression quantiles"
-        elif isinstance(self.regression_quantiles, numpy.ndarray) and self.regression_quantiles.shape[0] > 0:
-            res = res + f" and {self.regression_quantiles} regression quantiles"
+        if isinstance(self.regression_quantiles, dict) and len(self.regression_quantiles) > 0:
+            res = res + f" and {len(self.regression_quantiles)} regression quantiles for {str(list(self.regression_quantiles.keys()))}"
         else:
             res = res + " and no regression quantiles"
 
