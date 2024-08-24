@@ -28,6 +28,35 @@ def _is_list_of_probs(obj):
         return False
     return all(isinstance(item, (int, float)) and 0 <= item <= 1 for item in obj)
 
+def _five_point_summary(arr):
+    return {
+        'min': numpy.min(arr),
+        '25%': numpy.percentile(arr, 25),
+        'median': numpy.median(arr),
+        '75%': numpy.percentile(arr, 75),
+        'max': numpy.max(arr)
+    }
+
+def _five_point_summary_columnwise(arr):
+    summary = {}
+    for i in range(arr.shape[1]):
+        summary[f'column_{i+1}'] = {
+            'min': numpy.min(arr[:, i]),
+            '25%': numpy.percentile(arr[:, i], 25),
+            'median': numpy.median(arr[:, i]),
+            '75%': numpy.percentile(arr[:, i], 75),
+            'max': numpy.max(arr[:, i])
+        }
+    return summary
+
+def _print_summary(summary):
+    headers = ['Statistic'] + list(summary.keys())
+    rows = ['min', '25%', 'median', '75%', 'max']
+    print("{:<12} {}".format(headers[0], ' | '.join(headers[1:])))
+    print("-" * 12 + " " + "-" * (len(headers) - 1) * 10)
+    for row in rows:
+        values = [summary[col][row] for col in summary]
+        print("{:<12} {}".format(row, ' | '.join(f"{v:>10}" for v in values)))
 
 # ======================================================================
 # Class definition
@@ -108,6 +137,15 @@ class Regressionizer(QuantileRegression):
     def set_value(self, arg):
         """Set pipeline value."""
         self._value = arg
+        return self
+
+    # ------------------------------------------------------------------
+    # Echo summary
+    # ------------------------------------------------------------------
+    def echo_data_summary(self, echo: bool=True):
+        self._value = _five_point_summary_columnwise(self.data)
+        if echo:
+            _print_summary(self._value)
         return self
 
     # ------------------------------------------------------------------
