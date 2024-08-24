@@ -169,7 +169,6 @@ class Regressionizer(QuantileRegression):
                    **kwargs):
         fig = go.Figure()
         epoch_start_date = datetime.strptime(epoch_start, "%Y-%m-%d")
-        print(epoch_start_date)
 
         if not isinstance(data, dict):
             raise ValueError("The data argument must be a dictionary of DataFrames or numpy arrays.")
@@ -212,6 +211,19 @@ class Regressionizer(QuantileRegression):
     # ------------------------------------------------------------------
     # Outliers
     # ------------------------------------------------------------------
+    def outliers(self):
+        if not (isinstance(self.regression_quantiles, dict) and len(self.regression_quantiles) > 1):
+            ValueError("Quantile regression with at least two regression quantiles is expected.")
+
+        topProb = sorted(self.regression_quantiles.keys())[-1]
+        bottomProb = sorted(self.regression_quantiles.keys())[0]
+
+        qr_bottom_outliers = [r for r in self.data if self.regression_quantiles[bottomProb](r[0]) > r[1]]
+        qr_top_outliers = [r for r in self.data if self.regression_quantiles[topProb](r[0]) < r[1]]
+
+        self._value = {"bottom": qr_bottom_outliers, "top": qr_top_outliers}
+
+        return self
 
     # ------------------------------------------------------------------
     # Plot
@@ -226,8 +238,15 @@ class Regressionizer(QuantileRegression):
         if date_list_plot:
             xs = start_date + pandas.to_timedelta(xs, unit='s')
 
+        # Plot data points
         fig.add_trace(go.Scatter(x=xs, y=self.data[:, 1], mode="markers", name="data"))
 
+        # Plot each regression quantile
+        for i, p in enumerate(self.regression_quantiles.keys()):
+            y_fit = [self.regression_quantiles[p](xi) for xi in self.data[:, 0]]
+            fig.add_trace(go.Scatter(x=xs, y=y_fit, mode='lines', name=f'{p}'))
+
+        # Layout options
         fig.update_layout(
             title=title,
             width=width,
@@ -235,11 +254,7 @@ class Regressionizer(QuantileRegression):
             **kwargs
         )
 
-        # Plot each regression quantile
-        for i, p in enumerate(self.regression_quantiles.keys()):
-            y_fit = [self.regression_quantiles[p](xi) for xi in self.data[:, 0]]
-            fig.add_trace(go.Scatter(x=xs, y=y_fit, mode='lines', name=f'{p}'))
-
+        # Result
         self._value = fig
 
         return self
@@ -258,6 +273,32 @@ class Regressionizer(QuantileRegression):
     # ------------------------------------------------------------------
     # PlotOutliers
     # ------------------------------------------------------------------
+    def plot_outliers(self, title="", width=800, height=600, date_list_plot: bool = False, **kwargs):
+
+        # Some code refactoring is possible:
+        # self.outliers()
+
+        topProb = sorted(self.regression_quantiles.keys())[-1]
+        bottomProb = sorted(self.regression_quantiles.keys())[0]
+
+        qr_bottom_outliers = [r for r in self.data if self.regression_quantiles[bottomProb](r[0]) > r[1]]
+        qr_top_outliers = [r for r in self.data if self.regression_quantiles[topProb](r[0]) < r[1]]
+
+        # Get the corresponding bottom and top regression quantiles
+        bottom_regression_quantile = [(x, self.regression_quantiles[bottomProb](x)) for x in self.data[:, 0]]
+        top_regression_quantile = [(x, self.regression_quantiles[topProb](x)) for x in self.data[:, 0]]
+
+        self._list_plot({"data": self.data,
+                         "bottom outliers": numpy.array(qr_bottom_outliers),
+                         "top outliers": numpy.array(qr_top_outliers),
+                         bottomProb: numpy.array(bottom_regression_quantile),
+                         topProb: numpy.array(top_regression_quantile)
+                         },
+                        mode={"data": "markers", "bottom outliers": "markers", "top outliers": "markers"},
+                        title=title, width=width, height=height,
+                        date_list_plot=date_list_plot,
+                        **kwargs)
+        return self
 
     # ------------------------------------------------------------------
     # Representation
