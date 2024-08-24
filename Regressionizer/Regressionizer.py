@@ -210,14 +210,23 @@ class Regressionizer(QuantileRegression):
         return self
 
     # ------------------------------------------------------------------
+    # Outliers
+    # ------------------------------------------------------------------
+
+    # ------------------------------------------------------------------
     # Plot
     # ------------------------------------------------------------------
     def plot(self,
              title="", width=800, height=600,
-             date_list_plot=False, epoch_start="1900-01-01", **kwargs):
+             date_list_plot: bool = False, epoch_start="1900-01-01", **kwargs):
+        start_date = pandas.Timestamp(epoch_start)
         fig = go.Figure()
 
-        fig.add_trace(go.Scatter(x=self.data[:, 0], y=self.data[:, 1], mode="markers", name="data"))
+        xs = self.data[:, 0]
+        if date_list_plot:
+            xs = start_date + pandas.to_timedelta(xs, unit='s')
+
+        fig.add_trace(go.Scatter(x=xs, y=self.data[:, 1], mode="markers", name="data"))
 
         fig.update_layout(
             title=title,
@@ -229,15 +238,22 @@ class Regressionizer(QuantileRegression):
         # Plot each regression quantile
         for i, p in enumerate(self.regression_quantiles.keys()):
             y_fit = [self.regression_quantiles[p](xi) for xi in self.data[:, 0]]
-            fig.add_trace(go.Scatter(x=self.data[:, 0], y=y_fit, mode='lines', name=f'{p}'))
+            fig.add_trace(go.Scatter(x=xs, y=y_fit, mode='lines', name=f'{p}'))
 
-        self._value=fig
+        self._value = fig
 
         return self
 
     # ------------------------------------------------------------------
     # DateListPlot
     # ------------------------------------------------------------------
+    def date_list_plot(self,
+                       title="", width=800, height=600,
+                       epoch_start="1900-01-01",
+                       **kwargs):
+        return self.plot(title=title, width=width, height=height,
+                         date_list_plot=True, epoch_start=epoch_start,
+                         **kwargs)
 
     # ------------------------------------------------------------------
     # PlotOutliers
