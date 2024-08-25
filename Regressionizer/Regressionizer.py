@@ -8,7 +8,7 @@ import numpy
 from datetime import datetime, timedelta
 import plotly.graph_objects as go
 import plotly.subplots as sp
-from scipy.optimize import curve_fit
+import scipy
 
 
 # ======================================================================
@@ -29,6 +29,7 @@ def _is_list_of_probs(obj):
         return False
     return all(isinstance(item, (int, float)) and 0 <= item <= 1 for item in obj)
 
+
 def _five_point_summary(arr):
     return {
         'min': numpy.min(arr),
@@ -37,6 +38,7 @@ def _five_point_summary(arr):
         '75%': numpy.percentile(arr, 75),
         'max': numpy.max(arr)
     }
+
 
 def _five_point_summary_columnwise(arr, column_names=('Regressor', 'Value')):
     if not (isinstance(column_names, list) and len(column_names) >= 2):
@@ -53,6 +55,7 @@ def _five_point_summary_columnwise(arr, column_names=('Regressor', 'Value')):
         }
     return summary
 
+
 def _print_summary(summary):
     headers = ['Statistic'] + list(summary.keys())
     rows = ['min', '25%', 'median', '75%', 'max']
@@ -61,6 +64,7 @@ def _print_summary(summary):
     for row in rows:
         values = [summary[col][row] for col in summary]
         print("{:<12} {}".format(row, ' | '.join(f"{v:>10}" for v in values)))
+
 
 # ======================================================================
 # Class definition
@@ -146,7 +150,7 @@ class Regressionizer(QuantileRegression):
     # ------------------------------------------------------------------
     # Echo summary
     # ------------------------------------------------------------------
-    def echo_data_summary(self, echo: bool=True):
+    def echo_data_summary(self, echo: bool = True):
         """
         Echo data summary.
 
@@ -203,6 +207,7 @@ class Regressionizer(QuantileRegression):
         :param kwargs: Additional keyword arguments for scipy.optimize.curve_fit.
         :return: The instance of the Regressionizer class.
         """
+
         def combined_function(x, *params):
             result = numpy.zeros_like(x)
             for func, param in zip(funcs, params):
@@ -214,16 +219,16 @@ class Regressionizer(QuantileRegression):
 
         func = numpy.vectorize(combined_function)
         p0 = kwargs.pop('p0', numpy.ones(len(funcs)))
-        params, pcov = curve_fit(func, x_data, y_data, p0=p0, **kwargs)
+        params, pcov = scipy.optimize.curve_fit(func, x_data, y_data, p0=p0, **kwargs)
 
         def fitted_function(x):
             return combined_function(x, *params)
 
         # Result
         if isinstance(self.regression_quantiles, dict):
-            self.regression_quantiles = self.regression_quantiles | {"mean" : fitted_function}
+            self.regression_quantiles = self.regression_quantiles | {"mean": fitted_function}
         else:
-            self.regression_quantiles = {"mean" : fitted_function}
+            self.regression_quantiles = {"mean": fitted_function}
 
         return self
 
@@ -350,6 +355,26 @@ class Regressionizer(QuantileRegression):
         return self
 
     # ------------------------------------------------------------------
+    # CDF
+    # ------------------------------------------------------------------
+    def conditional_cdf(self, points):
+        if isinstance(points, float | int):
+            return self.conditional_cdf([points, ])
+        elif not _is_numeric_list(points):
+            TypeError("A number or a list of numbers is expected as first argument.")
+
+        if not (isinstance(self.regression_quantiles, dict) and len(self.regression_quantiles) > 1):
+            ValueError("At least two regression quantiles is expected.")
+
+        res = {}
+        for p in points:
+            rq_values = numpy.array([(prob, self.regression_quantiles[prob](p)) for prob in sorted(self.regression_quantiles)])
+            res = res | {p: scipy.interpolate.interp1d(x=rq_values[:,0], y=rq_values[:,1])}
+
+        self._value = res
+        return self
+
+    # ------------------------------------------------------------------
     # Plot
     # ------------------------------------------------------------------
     def plot(self,
@@ -461,7 +486,7 @@ class Regressionizer(QuantileRegression):
     # ------------------------------------------------------------------
     def _create_multi_panel_plot_with_segments(self,
                                                function_dict,
-                                               title = "Error plots", width=800, height=300,
+                                               title="Error plots", width=800, height=300,
                                                **kwargs):
         num_functions = len(function_dict)
         fig = sp.make_subplots(rows=num_functions, cols=1, subplot_titles=list(function_dict.keys()))
@@ -479,7 +504,7 @@ class Regressionizer(QuantileRegression):
                 fig.add_trace(line_trace_x, row=i, col=1)
                 fig.add_trace(line_trace_y, row=i, col=1)
 
-        fig.update_layout(title = title, width=width, height=height * num_functions, **kwargs)
+        fig.update_layout(title=title, width=width, height=height * num_functions, **kwargs)
 
         self._value = fig
         return self
@@ -508,7 +533,8 @@ class Regressionizer(QuantileRegression):
         if date_list_plot:
             xs = start_date + pandas.to_timedelta(xs, unit='s')
 
-        function_dict = { k: [(xs, y - f(x)) for x, xs, y in zip(x, xs, ys)] for k, f in self.regression_quantiles.items()}
+        function_dict = {k: [(xs, y - f(x)) for x, xs, y in zip(x, xs, ys)] for k, f in
+                         self.regression_quantiles.items()}
         return self._create_multi_panel_plot_with_segments(function_dict,
                                                            title=title,
                                                            width=width, height=height,
