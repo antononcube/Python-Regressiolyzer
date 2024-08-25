@@ -2,7 +2,7 @@ import math
 import pickle
 import warnings
 from typing import Union, Optional
-from QuantileRegression import QuantileRegression, quantile_regression_fit, quantile_regression
+from QuantileRegression import QuantileRegression
 import pandas
 import numpy
 from datetime import datetime, timedelta
@@ -134,12 +134,12 @@ class Regressionizer(QuantileRegression):
             raise TypeError("The first argument is expected to be a list of functions (callables.)")
         return self
 
-    def set_probs(self, arg):
-        """Set probabilities."""
-        if _is_list_of_probs(arg):
-            self.probs = arg
+    def set_regression_quantiles(self, arg):
+        """Set regression quantiles."""
+        if isinstance(arg, dict) and _is_list_of_probs(list(arg.keys())):
+            self.set_regression_quantiles(arg)
         else:
-            TypeError("The first argument is expected to be a list of probabilities.")
+            TypeError("The first argument is expected to be a dictionary of probabilities to regression quantiles.")
         return self
 
     def set_value(self, arg):
@@ -587,6 +587,46 @@ class Regressionizer(QuantileRegression):
                                                            mode='lines',
                                                            filling=False,
                                                            **kwargs)
+
+    # ------------------------------------------------------------------
+    # To dictionary form
+    # ------------------------------------------------------------------
+    def to_dict(self):
+        """Convert to dictionary form.
+
+        Returns dictionary representation of the Regessionizer object with keys:
+        ['data', 'basis_funcs', 'regression_quantiles', 'value'].
+
+        (Ideally) this function facilitates rapid conversion and serialization.
+        """
+
+        res = {"data": self.take_data(),
+               "basis_funcs": self.take_basis_funcs(),
+               "regression_quantiles": self.take_regression_quantiles(),
+               "value": self.take_value()}
+        return res
+
+    # ------------------------------------------------------------------
+    # From dictionary form
+    # ------------------------------------------------------------------
+    def from_dict(self, arg):
+        """Convert from dictionary form.
+
+        Creates a Regressionizer object from a dictionary representation with keys:
+        ['data', 'basis_funcs', 'regression_quantiles', 'value'].
+
+        (Ideally) this function facilitates rapid conversion and serialization.
+        """
+        if not (isinstance(arg, dict) and
+                all([x in arg for x in ['data', 'basis_funcs', 'regression_quantiles']])):
+            raise TypeError("""The first argument is expected to be a dictionary with keys:
+            'data', 'basis_funcs', 'regression_quantiles'.""")
+
+        self.set_data(arg["data"])
+        self.set_regression_quantiles(arg["regression_quantiles"])
+        self.set_basis_funcs(arg["basis_funcs"])
+        self.set_value(arg.get("value", None))
+        return self
 
     # ------------------------------------------------------------------
     # Representation
