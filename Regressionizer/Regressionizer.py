@@ -184,6 +184,12 @@ class Regressionizer(QuantileRegression):
     # Linear regression
     # ------------------------------------------------------------------
     def linear_regression_fit(self, funcs, **kwargs):
+        """
+        Linear regression fit.
+        :param funcs: Functions to fit.
+        :param kwargs: Additional keyword arguments for scipy.optimize.curve_fit.
+        :return: The instance of the Regressionizer class.
+        """
         def combined_function(x, *params):
             result = numpy.zeros_like(x)
             for func, param in zip(funcs, params):
