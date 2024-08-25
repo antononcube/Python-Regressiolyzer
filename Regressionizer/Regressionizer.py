@@ -8,6 +8,7 @@ import numpy
 from datetime import datetime, timedelta
 import plotly.graph_objects as go
 import plotly.subplots as sp
+from scipy.optimize import curve_fit
 
 
 # ======================================================================
@@ -157,6 +158,48 @@ class Regressionizer(QuantileRegression):
         self._value = _five_point_summary_columnwise(self.data)
         if echo:
             _print_summary(self._value)
+        return self
+
+    # ------------------------------------------------------------------
+    # Rescale
+    # ------------------------------------------------------------------
+    def rescale(self, regressor=False, value=True):
+        """
+        Rescale the data.
+        :param regressor: Whether to rescale the regressor column data.
+        :param value: Whether to rescale the value column data.
+        :return: The instance of the Regressionizer class.
+        """
+        if regressor:
+            min_regressor = self.data[:, 0].min()
+            max_regressor = self.data[:, 0].max()
+            self.data[:, 0] = (self.data[:, 0] - min_regressor) / (max_regressor - min_regressor)
+
+        if value:
+            min_value = self.data[:, 1].min()
+            max_value = self.data[:, 1].max()
+            self.data[:, 1] = (self.data[:, 1] - min_value) / (max_value - min_value)
+
+    # ------------------------------------------------------------------
+    # Linear regression
+    # ------------------------------------------------------------------
+    def linear_regression(self, functions, **kwargs):
+        def combined_function(x, *params):
+            result = numpy.zeros_like(x)
+            for func, param in zip(functions, params):
+                result += func(x) * param
+            return result
+
+        x_data = self.data[:, 0]
+        y_data = self.data[:, 1]
+
+        params = curve_fit(combined_function, x_data, y_data, **kwargs)
+
+        def fitted_function(x):
+            return combined_function(x, *params)
+
+        # Result
+        self._value = fitted_function
         return self
 
     # ------------------------------------------------------------------
