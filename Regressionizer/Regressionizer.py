@@ -358,6 +358,11 @@ class Regressionizer(QuantileRegression):
     # CDF
     # ------------------------------------------------------------------
     def conditional_cdf(self, points):
+        """
+        Conditional Cumulative Distribution Functions (CDFs).
+        :param points: Points to find CDFs at.
+        :return: An instance of the Regressionizer class with CDFs.
+        """
         if isinstance(points, float | int):
             return self.conditional_cdf([points, ])
         elif not _is_numeric_list(points):
@@ -563,7 +568,7 @@ class Regressionizer(QuantileRegression):
         :return: The instance of the Regressionizer class.
         """
         if isinstance(points, float | int):
-            return self.conditional_cdf([points, ])
+            return self.conditional_cdf_plot([points, ], title=title, width=width, height=height, **kwargs)
         elif not _is_numeric_list(points):
             TypeError("A number or a list of numbers is expected as first argument.")
 
