@@ -183,23 +183,29 @@ class Regressionizer(QuantileRegression):
     # ------------------------------------------------------------------
     # Linear regression
     # ------------------------------------------------------------------
-    def linear_regression(self, functions, **kwargs):
+    def linear_regression_fit(self, funcs, **kwargs):
         def combined_function(x, *params):
             result = numpy.zeros_like(x)
-            for func, param in zip(functions, params):
+            for func, param in zip(funcs, params):
                 result += func(x) * param
             return result
 
         x_data = self.data[:, 0]
         y_data = self.data[:, 1]
 
-        params = curve_fit(combined_function, x_data, y_data, **kwargs)
+        func = numpy.vectorize(combined_function)
+        p0 = kwargs.pop('p0', numpy.ones(len(funcs)))
+        params, pcov = curve_fit(func, x_data, y_data, p0=p0, **kwargs)
 
         def fitted_function(x):
             return combined_function(x, *params)
 
         # Result
-        self._value = fitted_function
+        if isinstance(self.regression_quantiles, dict):
+            self.regression_quantiles = self.regression_quantiles | {"mean" : fitted_function}
+        else:
+            self.regression_quantiles = {"mean" : fitted_function}
+
         return self
 
     # ------------------------------------------------------------------
