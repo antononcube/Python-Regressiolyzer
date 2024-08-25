@@ -180,6 +180,8 @@ class Regressionizer(QuantileRegression):
             max_value = self.data[:, 1].max()
             self.data[:, 1] = (self.data[:, 1] - min_value) / (max_value - min_value)
 
+        return self
+
     # ------------------------------------------------------------------
     # Least Squares
     # ------------------------------------------------------------------
