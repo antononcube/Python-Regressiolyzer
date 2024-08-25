@@ -369,7 +369,7 @@ class Regressionizer(QuantileRegression):
         res = {}
         for p in points:
             rq_values = numpy.array(
-                [(prob, self.regression_quantiles[prob](p)) for prob in sorted(self.regression_quantiles)])
+                [(self.regression_quantiles[prob](p), prob) for prob in sorted(self.regression_quantiles)])
             res = res | {p: scipy.interpolate.interp1d(x=rq_values[:, 0], y=rq_values[:, 1])}
 
         self._value = res
@@ -573,7 +573,7 @@ class Regressionizer(QuantileRegression):
         res = {}
         for p in points:
             rq_values = numpy.array(
-                [(prob, self.regression_quantiles[prob](p)) for prob in sorted(self.regression_quantiles)])
+                [(self.regression_quantiles[prob](p), prob) for prob in sorted(self.regression_quantiles)])
             res = res | {p: rq_values}
 
         return self._create_multi_panel_plot_with_segments(res,
