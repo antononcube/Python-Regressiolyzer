@@ -181,11 +181,22 @@ class Regressionizer(QuantileRegression):
             self.data[:, 1] = (self.data[:, 1] - min_value) / (max_value - min_value)
 
     # ------------------------------------------------------------------
-    # Linear regression
+    # Least Squares
     # ------------------------------------------------------------------
-    def linear_regression_fit(self, funcs, **kwargs):
+    def fit(self, funcs, **kwargs):
         """
-        Linear regression fit.
+        Least squares fit -- shortcut for least squares fit.
+        :param funcs:
+        :param kwargs:
+        :return:
+        """
+        return self.least_squares_fit(funcs, **kwargs)
+
+    def least_squares_fit(self, funcs, **kwargs):
+        """
+        Least squares fit.
+        Non-linear.
+
         :param funcs: Functions to fit.
         :param kwargs: Additional keyword arguments for scipy.optimize.curve_fit.
         :return: The instance of the Regressionizer class.
