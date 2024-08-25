@@ -368,8 +368,9 @@ class Regressionizer(QuantileRegression):
 
         res = {}
         for p in points:
-            rq_values = numpy.array([(prob, self.regression_quantiles[prob](p)) for prob in sorted(self.regression_quantiles)])
-            res = res | {p: scipy.interpolate.interp1d(x=rq_values[:,0], y=rq_values[:,1])}
+            rq_values = numpy.array(
+                [(prob, self.regression_quantiles[prob](p)) for prob in sorted(self.regression_quantiles)])
+            res = res | {p: scipy.interpolate.interp1d(x=rq_values[:, 0], y=rq_values[:, 1])}
 
         self._value = res
         return self
@@ -487,22 +488,25 @@ class Regressionizer(QuantileRegression):
     def _create_multi_panel_plot_with_segments(self,
                                                function_dict,
                                                title="Error plots", width=800, height=300,
+                                               mode = 'markers',
+                                               filling : bool = True,
                                                **kwargs):
         num_functions = len(function_dict)
         fig = sp.make_subplots(rows=num_functions, cols=1, subplot_titles=list(function_dict.keys()))
 
         for i, (name, points) in enumerate(function_dict.items(), start=1):
             x, y = zip(*points)
-            scatter_trace = go.Scatter(x=x, y=y, mode='markers', name=name)
+            scatter_trace = go.Scatter(x=x, y=y, mode=mode, name=name)
             fig.add_trace(scatter_trace, row=i, col=1)
 
-            for xi, yi in zip(x, y):
-                line_trace_x = go.Scatter(x=[xi, xi], y=[0, yi], mode='lines', showlegend=False,
-                                          line=dict(color='gray', dash='solid'))
-                line_trace_y = go.Scatter(x=[xi, xi], y=[yi, 0], mode='lines', showlegend=False,
-                                          line=dict(color='gray', dash='dash'))
-                fig.add_trace(line_trace_x, row=i, col=1)
-                fig.add_trace(line_trace_y, row=i, col=1)
+            if filling:
+                for xi, yi in zip(x, y):
+                    line_trace_x = go.Scatter(x=[xi, xi], y=[0, yi], mode='lines', showlegend=False,
+                                              line=dict(color='gray', dash='solid'))
+                    line_trace_y = go.Scatter(x=[xi, xi], y=[yi, 0], mode='lines', showlegend=False,
+                                              line=dict(color='gray', dash='dash'))
+                    fig.add_trace(line_trace_x, row=i, col=1)
+                    fig.add_trace(line_trace_y, row=i, col=1)
 
         fig.update_layout(title=title, width=width, height=height * num_functions, **kwargs)
 
@@ -538,6 +542,45 @@ class Regressionizer(QuantileRegression):
         return self._create_multi_panel_plot_with_segments(function_dict,
                                                            title=title,
                                                            width=width, height=height,
+                                                           mode = 'markers',
+                                                           filling = True,
+                                                           **kwargs)
+
+    # ------------------------------------------------------------------
+    # Conditional CDF plots
+    # ------------------------------------------------------------------
+    def conditional_cdf_plot(self,
+                             points,
+                             title="", width=800, height=300,
+                             **kwargs):
+        """
+        Plot conditional CDFs based on found regression quantiles.
+        :param points: List of point to at which the CDFs are computed.
+        :param title: Title of the plot.
+        :param width: Width of the plot.
+        :param height: Height of the plot.
+        :param kwargs: Additional keyword arguments to be passed to the plotly's update_layout.'
+        :return: The instance of the Regressionizer class.
+        """
+        if isinstance(points, float | int):
+            return self.conditional_cdf([points, ])
+        elif not _is_numeric_list(points):
+            TypeError("A number or a list of numbers is expected as first argument.")
+
+        if not (isinstance(self.regression_quantiles, dict) and len(self.regression_quantiles) > 1):
+            ValueError("At least two regression quantiles is expected.")
+
+        res = {}
+        for p in points:
+            rq_values = numpy.array(
+                [(prob, self.regression_quantiles[prob](p)) for prob in sorted(self.regression_quantiles)])
+            res = res | {p: rq_values}
+
+        return self._create_multi_panel_plot_with_segments(res,
+                                                           title=title,
+                                                           width=width, height=height,
+                                                           mode='lines',
+                                                           filling=False,
                                                            **kwargs)
 
     # ------------------------------------------------------------------
