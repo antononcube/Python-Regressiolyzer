@@ -8,10 +8,10 @@ setuptools.setup(
     version="0.1.0",
     author="Anton Antonov",
     author_email="antononcube@posteo.net",
-    description="Regression workflows package based on Linear Regression and Quantile Regression.",
+    description="Regression workflows package based on Least Squares Regression and Quantile Regression.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/antononcube/Python-packages/tree/main/LatentSemanticAnalyzer",
+    url="https://github.com/antononcube/Python-Regressionizer",
     install_requires=['numpy', 'scipy', 'pandas', 'plotly', 'datetime'],
     packages=setuptools.find_packages(),
     classifiers=[
@@ -20,6 +20,6 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     keywords=['regression','quantile', 'quantile regression', 'linear', 'linear regression', 'workflow'],
-    package_data={'': ['resources/*.csv', 'resources/*.csv.gz']},
+    package_data={},
     python_requires='>=3.7',
 )
