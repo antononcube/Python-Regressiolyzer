@@ -507,6 +507,7 @@ class Regressionizer(QuantileRegression):
     # ------------------------------------------------------------------
     def error_plots(self,
                     title="", width=800, height=300,
+                    relative_errors: bool = False,
                     date_list_plot: bool = False, epoch_start="1900-01-01",
                     **kwargs):
         """
@@ -514,6 +515,7 @@ class Regressionizer(QuantileRegression):
         :param title: Title of the plot.
         :param width: Width of the plot.
         :param height: Height of the plot.
+        :param relative_errors: Whether to computer relative errors or not.
         :param date_list_plot: Whether to plot as a date-time series.
         :param epoch_start: Start of epoch when regressor is in seconds.
         :param kwargs: Additional keyword arguments to be passed to the plotly's update_layout.'
@@ -526,8 +528,16 @@ class Regressionizer(QuantileRegression):
         if date_list_plot:
             xs = start_date + pandas.to_timedelta(xs, unit='s')
 
-        function_dict = {k: [(xs, y - f(x)) for x, xs, y in zip(x, xs, ys)] for k, f in
+        # Errors computation
+        if relative_errors:
+            function_dict = {k: [(xs, (y - f(x)) / y if y != 0 else y - f(x)) for x, xs, y in zip(x, xs, ys)] for k, f in
                          self.take_regression_quantiles().items()}
+        else:
+            function_dict = {k: [(xs, y - f(x)) for x, xs, y in zip(x, xs, ys)] for k, f in
+                             self.take_regression_quantiles().items()}
+
+
+        # Delegate
         return self._create_multi_panel_plot_with_segments(function_dict,
                                                            title=title,
                                                            width=width, height=height,
