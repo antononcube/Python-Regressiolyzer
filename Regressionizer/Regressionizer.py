@@ -266,6 +266,29 @@ class Regressionizer(QuantileRegression):
         return self
 
     # ------------------------------------------------------------------
+    # Error plots
+    # ------------------------------------------------------------------
+    def error(self, relative_errors: bool = False):
+        """
+        Residual fitting errors for found regression quantiles.
+        :param relative_errors: Whether to computer relative errors or not.
+        """
+        xs = self.take_data()[:, 0]
+        ys = self.take_data()[:, 1]
+
+        # Errors computation
+        if relative_errors:
+            function_dict = {k: [(x, (y - f(x)) / y if y != 0 else y - f(x)) for x, y in zip(xs, ys)] for k, f in
+                             self.take_regression_quantiles().items()}
+        else:
+            function_dict = {k: [(x, y - f(x)) for x, y in zip(xs, ys)] for k, f in
+                             self.take_regression_quantiles().items()}
+
+        # Result
+        self._value = function_dict
+        return self
+
+    # ------------------------------------------------------------------
     # Generic plot (private)
     # ------------------------------------------------------------------
     def _list_plot(self,
@@ -477,8 +500,8 @@ class Regressionizer(QuantileRegression):
     def _create_multi_panel_plot_with_segments(self,
                                                function_dict,
                                                title="Error plots", width=800, height=300,
-                                               mode = 'markers',
-                                               filling : bool = True,
+                                               mode='markers',
+                                               filling: bool = True,
                                                **kwargs):
         num_functions = len(function_dict)
         fig = sp.make_subplots(rows=num_functions, cols=1, subplot_titles=list(function_dict.keys()))
@@ -528,21 +551,21 @@ class Regressionizer(QuantileRegression):
         if date_list_plot:
             xs = start_date + pandas.to_timedelta(xs, unit='s')
 
+        # Instead of using the method .errors it is better to use compute them here because of plot x-axis.
         # Errors computation
         if relative_errors:
-            function_dict = {k: [(xs, (y - f(x)) / y if y != 0 else y - f(x)) for x, xs, y in zip(x, xs, ys)] for k, f in
-                         self.take_regression_quantiles().items()}
+            function_dict = {k: [(xs, (y - f(x)) / y if y != 0 else y - f(x)) for x, xs, y in zip(x, xs, ys)]
+                             for k, f in self.take_regression_quantiles().items()}
         else:
-            function_dict = {k: [(xs, y - f(x)) for x, xs, y in zip(x, xs, ys)] for k, f in
-                             self.take_regression_quantiles().items()}
-
+            function_dict = {k: [(xs, y - f(x)) for x, xs, y in zip(x, xs, ys)]
+                             for k, f in self.take_regression_quantiles().items()}
 
         # Delegate
         return self._create_multi_panel_plot_with_segments(function_dict,
                                                            title=title,
                                                            width=width, height=height,
-                                                           mode = 'markers',
-                                                           filling = True,
+                                                           mode='markers',
+                                                           filling=True,
                                                            **kwargs)
 
     # ------------------------------------------------------------------
@@ -572,7 +595,8 @@ class Regressionizer(QuantileRegression):
         res = {}
         for p in points:
             rq_values = numpy.array(
-                [(self.take_regression_quantiles()[prob](p), prob) for prob in sorted(self.take_regression_quantiles())])
+                [(self.take_regression_quantiles()[prob](p), prob) for prob in
+                 sorted(self.take_regression_quantiles())])
             res = res | {p: rq_values}
 
         return self._create_multi_panel_plot_with_segments(res,
