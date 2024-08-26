@@ -268,7 +268,7 @@ class Regressionizer(QuantileRegression):
     # ------------------------------------------------------------------
     # Error plots
     # ------------------------------------------------------------------
-    def error(self, relative_errors: bool = False):
+    def errors(self, relative_errors: bool = False):
         """
         Residual fitting errors for found regression quantiles.
         :param relative_errors: Whether to computer relative errors or not.
