@@ -89,22 +89,6 @@ class Regressionizer(QuantileRegression):
     # ------------------------------------------------------------------
     # Getters
     # ------------------------------------------------------------------
-    def take_data(self):
-        """Take the data."""
-        return self.data
-
-    def take_basis_funcs(self):
-        """Take the basis functions."""
-        return self.basis_funcs
-
-    def take_probs(self):
-        """Take the probabilities."""
-        return self.probs
-
-    def take_regression_quantiles(self):
-        """Take the regression quantiles."""
-        return self.regression_quantiles
-
     def take_value(self):
         """Take the pipeline value."""
         return self._value
@@ -118,18 +102,18 @@ class Regressionizer(QuantileRegression):
             columns = arg.columns.str.lower()
             has_columns = 'time' in columns and 'value' in columns
             if has_columns:
-                self.data = arg[['Time', 'Value']].to_numpy()
+                self._data = arg[['Time', 'Value']].to_numpy()
         elif isinstance(arg, numpy.ndarray) and arg.shape[1] >= 2:
-            self.data = arg
+            self._data = arg
         elif isinstance(arg, numpy.ndarray) and arg.shape[1] == 1:
-            self.data = numpy.column_stack((numpy.arange(len(arg)), arg))
+            self._data = numpy.column_stack((numpy.arange(len(arg)), arg))
         else:
             ValueError("The first argument is expected to be a list of numbers, a numpy array, or a data frame.")
 
     def set_basis_funcs(self, arg):
         """Set document-term matrix."""
         if _is_list_of_callables(arg):
-            self.basis_funcs = arg
+            self._basis_funcs = arg
         else:
             raise TypeError("The first argument is expected to be a list of functions (callables.)")
         return self
@@ -137,7 +121,7 @@ class Regressionizer(QuantileRegression):
     def set_regression_quantiles(self, arg):
         """Set regression quantiles."""
         if isinstance(arg, dict) and _is_list_of_probs(list(arg.keys())):
-            self.set_regression_quantiles(arg)
+            self._regression_quantiles = arg
         else:
             TypeError("The first argument is expected to be a dictionary of probabilities to regression quantiles.")
         return self
@@ -159,7 +143,7 @@ class Regressionizer(QuantileRegression):
         Returns:
             Regressionizer: The instance of the Regressionizer class
         """
-        self._value = _five_point_summary_columnwise(self.data)
+        self._value = _five_point_summary_columnwise(self.take_data())
         if echo:
             _print_summary(self._value)
         return self
@@ -175,14 +159,14 @@ class Regressionizer(QuantileRegression):
         :return: The instance of the Regressionizer class.
         """
         if regressor:
-            min_regressor = self.data[:, 0].min()
-            max_regressor = self.data[:, 0].max()
-            self.data[:, 0] = (self.data[:, 0] - min_regressor) / (max_regressor - min_regressor)
+            min_regressor = self.take_data()[:, 0].min()
+            max_regressor = self.take_data()[:, 0].max()
+            self._data[:, 0] = (self.take_data()[:, 0] - min_regressor) / (max_regressor - min_regressor)
 
         if value:
-            min_value = self.data[:, 1].min()
-            max_value = self.data[:, 1].max()
-            self.data[:, 1] = (self.data[:, 1] - min_value) / (max_value - min_value)
+            min_value = self.take_data()[:, 1].min()
+            max_value = self.take_data()[:, 1].max()
+            self._data[:, 1] = (self.take_data()[:, 1] - min_value) / (max_value - min_value)
 
         return self
 
@@ -214,8 +198,8 @@ class Regressionizer(QuantileRegression):
                 result += func(x) * param
             return result
 
-        x_data = self.data[:, 0]
-        y_data = self.data[:, 1]
+        x_data = self.take_data()[:, 0]
+        y_data = self.take_data()[:, 1]
 
         func = numpy.vectorize(combined_function)
         p0 = kwargs.pop('p0', numpy.ones(len(funcs)))
@@ -225,10 +209,10 @@ class Regressionizer(QuantileRegression):
             return combined_function(x, *params)
 
         # Result
-        if isinstance(self.regression_quantiles, dict):
-            self.regression_quantiles = self.regression_quantiles | {"mean": fitted_function}
+        if isinstance(self.take_regression_quantiles(), dict):
+            self._regression_quantiles = self.take_regression_quantiles() | {"mean": fitted_function}
         else:
-            self.regression_quantiles = {"mean": fitted_function}
+            self._regression_quantiles = {"mean": fitted_function}
 
         return self
 
@@ -249,8 +233,8 @@ class Regressionizer(QuantileRegression):
         Regressionizer: The instance of the Regressionizer class with fitted regression quantiles.
         """
         super(Regressionizer, self).quantile_regression_fit(funcs, probs, **opts)
-        self.regression_quantiles = dict(zip(self.probs, self.regression_quantiles))
-        self._value = self.regression_quantiles
+        self._regression_quantiles = dict(zip(self.take_probs(), self.take_regression_quantiles()))
+        self._value = self.take_regression_quantiles()
         return self
 
     # ------------------------------------------------------------------
@@ -277,8 +261,8 @@ class Regressionizer(QuantileRegression):
         Regressionizer: The instance of the Regressionizer class with fitted regression quantiles.
         """
         super(Regressionizer, self).quantile_regression(knots, probs, order, **opts)
-        self.regression_quantiles = dict(zip(self.probs, self.regression_quantiles))
-        self._value = self.regression_quantiles
+        self._regression_quantiles = dict(zip(self.take_probs(), self.take_regression_quantiles()))
+        self._value = self.take_regression_quantiles()
         return self
 
     # ------------------------------------------------------------------
@@ -341,14 +325,14 @@ class Regressionizer(QuantileRegression):
 
         :return: The instance of the Regressionizer class with found outliers.
         """
-        if not (isinstance(self.regression_quantiles, dict) and len(self.regression_quantiles) > 1):
+        if not (isinstance(self.take_regression_quantiles(), dict) and len(self.take_regression_quantiles()) > 1):
             ValueError("Quantile regression with at least two regression quantiles is expected.")
 
-        topProb = sorted(self.regression_quantiles.keys())[-1]
-        bottomProb = sorted(self.regression_quantiles.keys())[0]
+        topProb = sorted(self.take_regression_quantiles().keys())[-1]
+        bottomProb = sorted(self.take_regression_quantiles().keys())[0]
 
-        qr_bottom_outliers = [r for r in self.data if self.regression_quantiles[bottomProb](r[0]) > r[1]]
-        qr_top_outliers = [r for r in self.data if self.regression_quantiles[topProb](r[0]) < r[1]]
+        qr_bottom_outliers = [r for r in self.take_data() if self.take_regression_quantiles()[bottomProb](r[0]) > r[1]]
+        qr_top_outliers = [r for r in self.take_data() if self.take_regression_quantiles()[topProb](r[0]) < r[1]]
 
         self._value = {"bottom": qr_bottom_outliers, "top": qr_top_outliers}
 
@@ -368,13 +352,13 @@ class Regressionizer(QuantileRegression):
         elif not _is_numeric_list(points):
             TypeError("A number or a list of numbers is expected as first argument.")
 
-        if not (isinstance(self.regression_quantiles, dict) and len(self.regression_quantiles) > 1):
+        if not (isinstance(self.take_regression_quantiles(), dict) and len(self.take_regression_quantiles()) > 1):
             ValueError("At least two regression quantiles is expected.")
 
         res = {}
         for p in points:
             rq_values = numpy.array(
-                [(self.regression_quantiles[prob](p), prob) for prob in sorted(self.regression_quantiles)])
+                [(self.take_regression_quantiles()[prob](p), prob) for prob in sorted(self.take_regression_quantiles())])
             res = res | {p: scipy.interpolate.interp1d(x=rq_values[:, 0], y=rq_values[:, 1])}
 
         self._value = res
@@ -400,16 +384,16 @@ class Regressionizer(QuantileRegression):
         start_date = pandas.Timestamp(epoch_start)
         fig = go.Figure()
 
-        xs = self.data[:, 0]
+        xs = self.take_data()[:, 0]
         if date_list_plot:
             xs = start_date + pandas.to_timedelta(xs, unit='s')
 
         # Plot data points
-        fig.add_trace(go.Scatter(x=xs, y=self.data[:, 1], mode="markers", name="data"))
+        fig.add_trace(go.Scatter(x=xs, y=self.take_data()[:, 1], mode="markers", name="data"))
 
         # Plot each regression quantile
-        for i, p in enumerate(self.regression_quantiles.keys()):
-            y_fit = [self.regression_quantiles[p](xi) for xi in self.data[:, 0]]
+        for i, p in enumerate(self.take_regression_quantiles().keys()):
+            y_fit = [self.take_regression_quantiles()[p](xi) for xi in self.take_data()[:, 0]]
             fig.add_trace(go.Scatter(x=xs, y=y_fit, mode='lines', name=f'{p}'))
 
         # Layout options
@@ -465,17 +449,17 @@ class Regressionizer(QuantileRegression):
         # Some code refactoring is possible:
         # self.outliers()
 
-        topProb = sorted(self.regression_quantiles.keys())[-1]
-        bottomProb = sorted(self.regression_quantiles.keys())[0]
+        topProb = sorted(self.take_regression_quantiles().keys())[-1]
+        bottomProb = sorted(self.take_regression_quantiles().keys())[0]
 
-        qr_bottom_outliers = [r for r in self.data if self.regression_quantiles[bottomProb](r[0]) > r[1]]
-        qr_top_outliers = [r for r in self.data if self.regression_quantiles[topProb](r[0]) < r[1]]
+        qr_bottom_outliers = [r for r in self.take_data() if self.take_regression_quantiles()[bottomProb](r[0]) > r[1]]
+        qr_top_outliers = [r for r in self.take_data() if self.take_regression_quantiles()[topProb](r[0]) < r[1]]
 
         # Get the corresponding bottom and top regression quantiles
-        bottom_regression_quantile = [(x, self.regression_quantiles[bottomProb](x)) for x in self.data[:, 0]]
-        top_regression_quantile = [(x, self.regression_quantiles[topProb](x)) for x in self.data[:, 0]]
+        bottom_regression_quantile = [(x, self.take_regression_quantiles()[bottomProb](x)) for x in self.take_data()[:, 0]]
+        top_regression_quantile = [(x, self.take_regression_quantiles()[topProb](x)) for x in self.take_data()[:, 0]]
 
-        self._list_plot({"data": self.data,
+        self._list_plot({"data": self.take_data(),
                          "bottom outliers": numpy.array(qr_bottom_outliers),
                          "top outliers": numpy.array(qr_top_outliers),
                          bottomProb: numpy.array(bottom_regression_quantile),
@@ -536,14 +520,14 @@ class Regressionizer(QuantileRegression):
         :return: The instance of the Regressionizer class.
         """
         start_date = pandas.Timestamp(epoch_start)
-        x = self.data[:, 0]
-        xs = self.data[:, 0]
-        ys = self.data[:, 1]
+        x = self.take_data()[:, 0]
+        xs = self.take_data()[:, 0]
+        ys = self.take_data()[:, 1]
         if date_list_plot:
             xs = start_date + pandas.to_timedelta(xs, unit='s')
 
         function_dict = {k: [(xs, y - f(x)) for x, xs, y in zip(x, xs, ys)] for k, f in
-                         self.regression_quantiles.items()}
+                         self.take_regression_quantiles().items()}
         return self._create_multi_panel_plot_with_segments(function_dict,
                                                            title=title,
                                                            width=width, height=height,
@@ -572,13 +556,13 @@ class Regressionizer(QuantileRegression):
         elif not _is_numeric_list(points):
             TypeError("A number or a list of numbers is expected as first argument.")
 
-        if not (isinstance(self.regression_quantiles, dict) and len(self.regression_quantiles) > 1):
+        if not (isinstance(self.take_regression_quantiles(), dict) and len(self.take_regression_quantiles()) > 1):
             ValueError("At least two regression quantiles is expected.")
 
         res = {}
         for p in points:
             rq_values = numpy.array(
-                [(self.regression_quantiles[prob](p), prob) for prob in sorted(self.regression_quantiles)])
+                [(self.take_regression_quantiles()[prob](p), prob) for prob in sorted(self.take_regression_quantiles())])
             res = res | {p: rq_values}
 
         return self._create_multi_panel_plot_with_segments(res,
@@ -632,13 +616,13 @@ class Regressionizer(QuantileRegression):
     # Representation
     # ------------------------------------------------------------------
     def __str__(self):
-        if isinstance(self.data, numpy.ndarray):
+        if isinstance(self.take_data(), numpy.ndarray):
             res = "Regressionizer object with data that has %d records" % self.take_data().shape[0]
         else:
             res = "Regressionizer object with no data"
 
-        if isinstance(self.regression_quantiles, dict) and len(self.regression_quantiles) > 0:
-            res = res + f" and {len(self.regression_quantiles)} regression quantiles for {str(list(self.regression_quantiles.keys()))}"
+        if isinstance(self.take_regression_quantiles(), dict) and len(self.take_regression_quantiles()) > 0:
+            res = res + f" and {len(self.take_regression_quantiles())} regression quantiles for {str(list(self.take_regression_quantiles().keys()))}"
         else:
             res = res + " and no regression quantiles"
 
