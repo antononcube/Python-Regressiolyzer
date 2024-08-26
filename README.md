@@ -70,7 +70,7 @@ Show the plot obtained above:
 obj.take_value().show()
 ```
 
-![](https://github.com/antononcube/Python-Regressionizer/blob/main/docs/random-data-B-spline-rqs.png)
+![](https://github.com/antononcube/Python-Regressionizer/blob/main/docs/img/random-data-B-spline-rqs.png)
 
 ------
 
