@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="Regressionizer",
-    version="0.1.1",
+    version="0.1.2",
     author="Anton Antonov",
     author_email="antononcube@posteo.net",
     description="Regression workflows package based on Least Squares Regression and Quantile Regression.",
