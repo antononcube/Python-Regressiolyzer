@@ -320,6 +320,7 @@ class Regressionizer(QuantileRegression):
                    data: dict,
                    title="", width=800, height=600,
                    mode: (str | dict) = "lines",
+                   data_color: (str | None) = "grey",
                    date_plot=False, epoch_start="1900-01-01",
                    **kwargs):
         fig = go.Figure()
@@ -354,7 +355,12 @@ class Regressionizer(QuantileRegression):
                 if label in mode_dict:
                     mode2 = mode_dict[label]
 
-                fig.add_trace(go.Scatter(x=x, y=y, mode=mode2, name=label))
+                if label == "data" and isinstance(data_color, str):
+                    fig.add_trace(go.Scatter(x=x, y=y, mode=mode2, name=label,
+                                             marker=dict(color=data_color),
+                                             line=dict(color=data_color)))
+                else:
+                    fig.add_trace(go.Scatter(x=x, y=y, mode=mode2, name=label))
 
         fig.update_layout(title=title, width=width, height=height, **kwargs)
 
@@ -417,6 +423,7 @@ class Regressionizer(QuantileRegression):
     # ------------------------------------------------------------------
     def plot(self,
              title="", width=800, height=600,
+             data_color: (str | None) = "grey",
              date_plot: bool = False, epoch_start="1900-01-01",
              **kwargs):
         """
@@ -424,6 +431,7 @@ class Regressionizer(QuantileRegression):
         :param title: Title of the plot.
         :param width: Width of the plot.
         :param height: Height of the plot.
+        :param data_color: Color of the data points.
         :param date_plot: Whether to plot as a date-time series.
         :param epoch_start: Start of epoch when regressor is in seconds.
         :param kwargs: Additional keyword arguments to be passed to the plotly's update_layout.
@@ -437,7 +445,7 @@ class Regressionizer(QuantileRegression):
             xs = start_date + pandas.to_timedelta(xs, unit='s')
 
         # Plot data points
-        fig.add_trace(go.Scatter(x=xs, y=self.take_data()[:, 1], mode="markers", name="data"))
+        fig.add_trace(go.Scatter(x=xs, y=self.take_data()[:, 1], mode="markers", name="data", marker_color=data_color))
 
         # Plot each regression quantile
         for i, p in enumerate(self.take_regression_quantiles().keys()):
@@ -500,6 +508,7 @@ class Regressionizer(QuantileRegression):
     # ------------------------------------------------------------------
     def outliers_plot(self,
                       title="", width=800, height=600,
+                      data_color: (str | None) = "grey",
                       date_plot: bool = False, epoch_start="1900-01-01",
                       **kwargs):
         """
@@ -507,6 +516,7 @@ class Regressionizer(QuantileRegression):
         :param title: Title of the plot.
         :param width: Width of the plot.
         :param height: Height of the plot.
+        :param data_color: Color of the data points.
         :param date_plot: Whether to plot as a date-time series.
         :param epoch_start: Start of epoch when regressor is in seconds.
         :param kwargs: Additional keyword arguments to be passed to the plotly's update_layout.'
@@ -533,6 +543,7 @@ class Regressionizer(QuantileRegression):
                          },
                         mode={"data": "markers", "bottom outliers": "markers", "top outliers": "markers"},
                         title=title, width=width, height=height,
+                        date_color=data_color,
                         date_plot=date_plot, epoch_start=epoch_start,
                         **kwargs)
         return self
