@@ -40,7 +40,7 @@ def _five_point_summary(arr):
     }
 
 
-def _five_point_summary_columnwise(arr, column_names=('Regressor', 'Value')):
+def _five_point_summary_column_wise(arr, column_names=('Regressor', 'Value')):
     if not (isinstance(column_names, list) and len(column_names) >= 2):
         ValueError("The value of column_names must be a list or tuple of length at least 2.")
 
@@ -132,8 +132,33 @@ class Regressionizer(QuantileRegression):
         return self
 
     # ------------------------------------------------------------------
-    # Echo summary
+    # Echo
     # ------------------------------------------------------------------
+    def echo(self, message):
+        """
+        Echo message.
+
+        Parameters:
+            message: Message to echo.
+        Returns:
+            Regressionizer: The instance of the Regressionizer class
+        """
+        print(message)
+        return self
+
+    # ------------------------------------------------------------------
+    # Data summary
+    # ------------------------------------------------------------------
+    def data_summary(self):
+        """
+        Data summary.
+
+        Returns:
+            Regressionizer: The instance of the Regressionizer class
+        """
+        self._value = _five_point_summary_column_wise(self.take_data())
+        return self
+
     def echo_data_summary(self, echo: bool = True):
         """
         Echo data summary.
@@ -143,7 +168,7 @@ class Regressionizer(QuantileRegression):
         Returns:
             Regressionizer: The instance of the Regressionizer class
         """
-        self._value = _five_point_summary_columnwise(self.take_data())
+        self.data_summary()
         if echo:
             _print_summary(self._value)
         return self
@@ -295,7 +320,7 @@ class Regressionizer(QuantileRegression):
                    data: dict,
                    title="", width=800, height=600,
                    mode: (str | dict) = "lines",
-                   date_list_plot=False, epoch_start="1900-01-01",
+                   date_plot=False, epoch_start="1900-01-01",
                    **kwargs):
         fig = go.Figure()
         start_date = pandas.Timestamp(epoch_start)
@@ -322,7 +347,7 @@ class Regressionizer(QuantileRegression):
                 else:
                     raise ValueError("Unsupported data type in dictionary of time series.")
 
-                if date_list_plot and numpy.issubdtype(x.dtype, numpy.number):
+                if date_plot and numpy.issubdtype(x.dtype, numpy.number):
                     x = start_date + pandas.to_timedelta(x, unit='s')
 
                 mode2 = "lines"
@@ -392,14 +417,14 @@ class Regressionizer(QuantileRegression):
     # ------------------------------------------------------------------
     def plot(self,
              title="", width=800, height=600,
-             date_list_plot: bool = False, epoch_start="1900-01-01",
+             date_plot: bool = False, epoch_start="1900-01-01",
              **kwargs):
         """
         Plot data and regression quantiles.
         :param title: Title of the plot.
         :param width: Width of the plot.
         :param height: Height of the plot.
-        :param date_list_plot: Whether to plot as a date-time series.
+        :param date_plot: Whether to plot as a date-time series.
         :param epoch_start: Start of epoch when regressor is in seconds.
         :param kwargs: Additional keyword arguments to be passed to the plotly's update_layout.
         :return: The instance of the Regressionizer class.
@@ -408,7 +433,7 @@ class Regressionizer(QuantileRegression):
         fig = go.Figure()
 
         xs = self.take_data()[:, 0]
-        if date_list_plot:
+        if date_plot:
             xs = start_date + pandas.to_timedelta(xs, unit='s')
 
         # Plot data points
@@ -441,6 +466,24 @@ class Regressionizer(QuantileRegression):
                        **kwargs):
         """
         Plot data and regression quantiles with time/date axis.
+        Synonym of date_plot.
+
+        :param title: Title of the plot.
+        :param width: Width of the plot.
+        :param height: Height of the plot.
+        :param epoch_start: Start of epoch when regressor is in seconds.
+        :param kwargs: Additional keyword arguments to be passed to the plotly's update_layout.
+        :return: The instance of the Regressionizer class.
+        """
+        return self.date_plot(title=title, width=width, height=height,
+                              epoch_start=epoch_start,**kwargs)
+
+    def date_plot(self,
+                  title="", width=800, height=600,
+                  epoch_start="1900-01-01",
+                  **kwargs):
+        """
+        Plot data and regression quantiles with time/date axis.
         :param title: Title of the plot.
         :param width: Width of the plot.
         :param height: Height of the plot.
@@ -449,22 +492,22 @@ class Regressionizer(QuantileRegression):
         :return: The instance of the Regressionizer class.
         """
         return self.plot(title=title, width=width, height=height,
-                         date_list_plot=True, epoch_start=epoch_start,
+                         date_plot=True, epoch_start=epoch_start,
                          **kwargs)
 
     # ------------------------------------------------------------------
     # PlotOutliers
     # ------------------------------------------------------------------
-    def plot_outliers(self,
+    def outliers_plot(self,
                       title="", width=800, height=600,
-                      date_list_plot: bool = False, epoch_start="1900-01-01",
+                      date_plot: bool = False, epoch_start="1900-01-01",
                       **kwargs):
         """
-        Plot data and regression quantiles, and outliers.
+        Plot data, regression quantiles, and outliers.
         :param title: Title of the plot.
         :param width: Width of the plot.
         :param height: Height of the plot.
-        :param date_list_plot: Whether to plot as a date-time series.
+        :param date_plot: Whether to plot as a date-time series.
         :param epoch_start: Start of epoch when regressor is in seconds.
         :param kwargs: Additional keyword arguments to be passed to the plotly's update_layout.'
         :return: The instance of the Regressionizer class.
@@ -490,7 +533,7 @@ class Regressionizer(QuantileRegression):
                          },
                         mode={"data": "markers", "bottom outliers": "markers", "top outliers": "markers"},
                         title=title, width=width, height=height,
-                        date_list_plot=date_list_plot, epoch_start=epoch_start,
+                        date_plot=date_plot, epoch_start=epoch_start,
                         **kwargs)
         return self
 
@@ -531,7 +574,7 @@ class Regressionizer(QuantileRegression):
     def error_plots(self,
                     title="", width=800, height=300,
                     relative_errors: bool = False,
-                    date_list_plot: bool = False, epoch_start="1900-01-01",
+                    date_plot: bool = False, epoch_start="1900-01-01",
                     **kwargs):
         """
         Plot residual fitting errors for found regression quantiles.
@@ -539,7 +582,7 @@ class Regressionizer(QuantileRegression):
         :param width: Width of the plot.
         :param height: Height of the plot.
         :param relative_errors: Whether to computer relative errors or not.
-        :param date_list_plot: Whether to plot as a date-time series.
+        :param date_plot: Whether to plot as a date-time series.
         :param epoch_start: Start of epoch when regressor is in seconds.
         :param kwargs: Additional keyword arguments to be passed to the plotly's update_layout.'
         :return: The instance of the Regressionizer class.
@@ -548,7 +591,7 @@ class Regressionizer(QuantileRegression):
         x = self.take_data()[:, 0]
         xs = self.take_data()[:, 0]
         ys = self.take_data()[:, 1]
-        if date_list_plot:
+        if date_plot:
             xs = start_date + pandas.to_timedelta(xs, unit='s')
 
         # Instead of using the method .errors it is better to use compute them here because of plot x-axis.
