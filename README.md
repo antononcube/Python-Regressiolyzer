@@ -37,6 +37,14 @@ Extensive guide is given in the Jupyter notebook
 
 ------
 
+## Design
+
+The following flowchart summarizes the workflows that are supported by `Regressionizer`:
+
+![](./docs/img/Quantile-regression-workflow-extended.jpg)
+
+------
+
 ## Usage examples 
 
 Import libraries:
