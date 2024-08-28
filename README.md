@@ -9,7 +9,7 @@ and the corresponding Markdown document
 
 ------
 
-## Summary of `Regressionizer` features 
+## Features summary 
 
 - The class `Regressionizer` facilitates rapid specifications of regressions workflows.
   - To quickly specify: 
@@ -20,6 +20,9 @@ and the corresponding Markdown document
     - plotting of data, fits, residual errors, outliers, CDFs 
 
 - `Regressionizer` works with data frames, numpy arrays, lists of numbers, and lists of numeric pairs.
+
+
+### Details and arguments
 
 - The curves computed with Quantile Regression are called **regression quantiles**.
 
@@ -65,7 +68,7 @@ y = np.sin(2 * np.pi * x) + np.random.normal(0, 0.4, x.shape)
 data = np.column_stack((x, y)
 ```
 
-Compute quantile regression and make the corresponding plot:
+Compute quantile regression for probabilities `[0.2, 0.5, 0.8]` and make the corresponding plot:
 
 ```python
 obj = (Regressionizer(data)
