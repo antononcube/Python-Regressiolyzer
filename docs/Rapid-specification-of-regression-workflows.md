@@ -30,6 +30,8 @@ For introduction and overview of Quantile Regression see the video
 
 - `Regressionizer` works with data frames, numpy arrays, lists of numbers, and lists of numeric pairs.
 
+### Details and arguments
+
 - The curves computed with Quantile Regression are called **regression quantiles**.
 
 - `Regressionizer` has three regression methods:
