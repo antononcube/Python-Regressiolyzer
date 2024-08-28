@@ -7,43 +7,43 @@ Extensive guide is given in the Jupyter notebook
 and the Markdown document
 ["Rapid-specification-of-regression-workflows.md"](https://github.com/antononcube/Python-Regressionizer/blob/main/docs/Rapid-specification-of-regression-workflows.md).
 
------
+------
 
-## Details
+## Summary of `Regressionizer` features 
 
-- The class `Regressionizer` allows for rapid and specification regression workflows.
+- The class `Regressionizer` facilitates rapid specifications of regressions workflows.
   - To quickly specify: 
-    - data rescaling and summary, 
-    - regression computations,
+    - data rescaling and summary
+    - regression computations
     - outliers finding
     - conditional Cumulative Distribution Functions (CDFs) reconstruction
-    - visualization of data, fits, residual errors, outliers, CDFs 
+    - plotting of data, fits, residual errors, outliers, CDFs 
 
-- `Regressionizer` works with data frames, numpy arrays, and lists of numbers, and lists of numeric pairs.
+- `Regressionizer` works with data frames, numpy arrays, lists of numbers, and lists of numeric pairs.
 
-- The curves computed with quantile regression are called **regression quantiles**.
+- The curves computed with Quantile Regression are called **regression quantiles**.
 
 - `Regressionizer` has three regression methods:
   - `quantile_regression`
   - `quantile_regression_fit`
   - `least_squares_fit`
   
-- The regression quantiles computed with the method `quantile_regression` correspond to the specified probabilities
-  - The regression quantiles are linear combinations of B-splines generated over the specified knots.
+- The regression quantiles computed with the methods `quantile_regression` and `quantile_regression_fit` 
+  correspond to probabilities specified with the argument `probs`.
 
-- In other words, the method`quantile_regression` computes fits using a B-spline functions basis.  
-  - The basis is specified with the `knots` argument and the option `order`.
+- The method`quantile_regression` computes fits using a B-spline functions basis.  
+  - The basis is specified with the arguments `knots` and `order`.
   - `order` is 3 by default. 
 
-- The methods `quantile_regession_fit` and `least_squares_fit` require a list of basis functions (to fit with.)
+- The methods `quantile_regession_fit` and `least_squares_fit` use lists of basis functions to fit with 
+  specified with the argument `funcs`.
 
-------
-
-## Design
+### Workflows flowchart
 
 The following flowchart summarizes the workflows that are supported by `Regressionizer`:
 
-![](./docs/img/Quantile-regression-workflow-extended.jpg)
+![](https://raw.githubusercontent.com/antononcube/Python-Regressionizer/main/docs/img/Quantile-regression-workflow-extended.jpg)
+
 
 ------
 
