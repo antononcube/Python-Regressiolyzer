@@ -8,11 +8,62 @@ August 2024
 
 ## Introduction
 
-This document provides examples of the rapid specification of regression workflows.
-That is done with the class `Regressionizer` of the Python package "Regessionizer", [AAp1].
+This document provides examples of rapid specification of regression workflows
+using the class `Regressionizer` of the Python package "Regessionizer", [AAp1].
+
+The primary focus of `Regressionizer` is [Quantile Regression (QR)](https://en.wikipedia.org/wiki/Quantile_regression), [RK1, RK2].
+It closely follows the monadic pipeline design explained in detail in the document 
+["A monad for Quantile Regression workflows"](https://github.com/antononcube/MathematicaForPrediction/blob/master/MarkdownDocuments/A-monad-for-Quantile-Regression-workflows.md), [AA1]. 
+
+For introduction and overview of Quantile Regression see the video
+["Boston useR! QuantileRegression Workflows 2019-04-18"](https://www.youtube.com/watch?v=a_Dk25xarvE).
+
+### Summary of `Regressionizer` features 
+
+- The class `Regressionizer` allows for rapid and specification regression workflows.
+  - To quickly specify: 
+    - data rescaling and summary, 
+    - regression computations,
+    - outliers finding
+    - conditional Cumulative Distribution Functions (CDFs) reconstruction
+    - visualization of data, fits, residual errors, outliers, CDFs 
+
+- `Regressionizer` works with data frames, numpy arrays, and lists of numbers, and lists of numeric pairs.
+
+- The curves computed with quantile regression are called **regression quantiles**.
+
+- `Regressionizer` has three regression methods:
+  - `quantile_regression`
+  - `quantile_regression_fit`
+  - `least_squares_fit`
+  
+- The regression quantiles computed with the method `quantile_regression` correspond to the specified probabilities
+  - The regression quantiles are linear combinations of B-splines generated over the specified knots.
+
+- In other words, the method`quantile_regression` computes fits using a B-spline functions basis.  
+  - The basis is specified with the `knots` argument and the option `order`.
+  - `order` is 3 by default. 
+
+- The methods `quantile_regession_fit` and `least_squares_fit` require a list of basis functions (to fit with.)
+
+### Workflows flowchart
+
+The following flowchart summarizes the workflows that are supported by `Regressionizer`:
+
+![](https://raw.githubusercontent.com/antononcube/Python-Regressionizer/main/docs/img/Quantile-regression-workflow-extended.jpg)
 
 
+### Previous work
 
+Roger Koenker implemented the R package "quantreg", [RKp1].
+Anton Antonov implemented the R package "QRMon-R" for the specification of monadic pipelines for doing QR, [AAp1].
+
+Several Wolfram Language (aka Mathematica) packages are implemented by Anton Antonov, see [AAp1, AAp2, AAf1].
+
+**Remark:** The paclets at the Wolfram Language Paclet Repository were initially Mathematica packages hosted at GitHub.
+The Wolfram Function Repository function 
+[`QuantileRegression`](https://resources.wolframcloud.com/FunctionRepository/resources/QuantileRegression/), [AAf1] 
+does only B-spline fitting.
 
 -------
 
@@ -582,16 +633,21 @@ Cambridge University Press, 2005.
 [GitHub/antononcube](https://github.com/antononcube).
 
 [AAp2] Anton Antonov,
+[`QRMon-R`](https://github.com/antononcube/QRMon-R),
+(2019),
+[GitHub/antononcube](https://github.com/antononcube).
+
+[AAp3] Anton Antonov,
 [Quantile Regression WL paclet](https://github.com/antononcube/WL-QuantileRegression-paclet),
 (2014-2023),
 [GitHub/antononcube](https://github.com/antononcube).
 
-[AAp3] Anton Antonov,
+[AAp4] Anton Antonov,
 [Monadic Quantile Regression WL paclet](https://github.com/antononcube/WL-MonadicQuantileRegression-paclet),
 (2018-2024),
 [GitHub/antononcube](https://github.com/antononcube).
 
-[AAp4] Anton Antonov,
+[AAf1] Anton Antonov,
 [`QuantileRegression`](https://resources.wolframcloud.com/FunctionRepository/resources/QuantileRegression),
 (2019),
 [Wolfram Function Repository](https://resources.wolframcloud.com/FunctionRepository/resources/QuantileRegression).
