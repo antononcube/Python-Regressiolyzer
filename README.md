@@ -4,7 +4,7 @@ Python package with a class that allows pipeline-like specification and executio
 
 Extensive guide is given in the Jupyter notebook 
 ["Rapid-specification-of-regression-workflows.ipynb"](https://github.com/antononcube/Python-Regressionizer/blob/main/docs/Rapid-specification-of-regression-workflows.ipynb) 
-and the Markdown document
+and the corresponding Markdown document
 ["Rapid-specification-of-regression-workflows.md"](https://github.com/antononcube/Python-Regressionizer/blob/main/docs/Rapid-specification-of-regression-workflows.md).
 
 ------
