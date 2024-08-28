@@ -543,7 +543,7 @@ class Regressionizer(QuantileRegression):
                          },
                         mode={"data": "markers", "bottom outliers": "markers", "top outliers": "markers"},
                         title=title, width=width, height=height,
-                        date_color=data_color,
+                        data_color=data_color,
                         date_plot=date_plot, epoch_start=epoch_start,
                         **kwargs)
         return self
