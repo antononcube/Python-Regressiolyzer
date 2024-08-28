@@ -3,13 +3,15 @@
 Python package with a class that allows pipeline-like specification and execution of regression workflows.
 
 Extensive guide is given in the Jupyter notebook 
-["Regressionizer-demo.ipynb"](https://github.com/antononcube/Python-Regressionizer/blob/main/docs/Regressionizer-demo.ipynb).
+["Rapid-specification-of-regression-workflows.ipynb"](https://github.com/antononcube/Python-Regressionizer/blob/main/docs/Rapid-specification-of-regression-workflows.ipynb) 
+and the Markdown document
+["Rapid-specification-of-regression-workflows.md"](https://github.com/antononcube/Python-Regressionizer/blob/main/docs/Rapid-specification-of-regression-workflows.md).
 
 -----
 
 ## Details
 
-- `Regressionizer` allows for rapid and specification regression workflows.
+- The class `Regressionizer` allows for rapid and specification regression workflows.
   - To quickly specify: 
     - data rescaling and summary, 
     - regression computations,
