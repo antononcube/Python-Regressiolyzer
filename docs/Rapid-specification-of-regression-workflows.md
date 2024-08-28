@@ -9,7 +9,7 @@ August 2024
 ## Introduction
 
 This document provides examples of specifying different regression workflows
-using the class `Regressionizer` of the Python package "Regessionizer", [AAp1].
+using the class `Regressionizer` of the Python package ["Regressionizer"](https://pypi.org/project/Regressionizer/), [AAp1].
 
 The primary focus of `Regressionizer` is [Quantile Regression (QR)](https://en.wikipedia.org/wiki/Quantile_regression), [RK1, RK2].
 It closely follows the monadic pipeline design explained in detail in the document 
