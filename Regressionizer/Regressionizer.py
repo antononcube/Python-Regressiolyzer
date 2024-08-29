@@ -2,6 +2,8 @@ import math
 import pickle
 import warnings
 from typing import Union, Optional
+
+from OutlierIdentifiers import outlier_position, top_outliers
 from QuantileRegression import QuantileRegression
 import pandas
 import numpy
@@ -336,6 +338,39 @@ class Regressionizer(QuantileRegression):
             }
 
         self._value = res
+        return self
+
+    # ------------------------------------------------------------------
+    # Find anomalies by residuals
+    # ------------------------------------------------------------------
+    def find_anomalies_by_residuals(self,
+                                    threshold=None,
+                                    outlier_identifier=None,
+                                    relative_errors: bool=False):
+        outliers = None
+        if isinstance(threshold, (int, float)):
+            outliers = self.pick_path_points(threshold, pick_above_threshold=True, relative_errors=relative_errors).take_value()
+            if not isinstance(outliers, dict):
+                TypeError("Unexpected result from pick_path_points().")
+            outliers = list(outliers.values())[0]
+
+        elif outlier_identifier is not None:
+            errs = self.errors(relative_errors=relative_errors).take_value()
+            if not isinstance(errs, dict):
+                TypeError("Unexpected result from errors().")
+            out_pos = outlier_position(abs(list(errs.values())[0][:, 1]), lambda x: top_outliers(outlier_identifier(x)))
+            outliers = self.take_data()
+            outliers = outliers[out_pos]
+
+        else:
+            ValueError("""
+            The option \"threshold\" is expected to be None or a number (an errors threshold.).
+            The argument \"outlier_identifier\" is expected to be None
+            or a function that give a list of lower and upper thresholds when applied to a list of numbers (errors absolute values.)
+            """)
+
+        # Result
+        self._value = outliers
         return self
 
     # ------------------------------------------------------------------
