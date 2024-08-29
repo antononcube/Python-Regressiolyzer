@@ -81,6 +81,18 @@ def to_datetime_index(x: (list | numpy.ndarray), epoch_start="1900-01-01", unit:
     xs = start_date + pandas.to_timedelta(x, unit=unit)
     return xs
 
+def dates_to_seconds(dates:list, epoch_start="1900-01-01"):
+    """
+    Convert dates into absolute times (from a given epoch start.)
+    :param dates: List of strings.
+    :param epoch_start: Epoch start in ISO date format.
+    :return: list of floats.
+    """
+    start_date = pandas.Timestamp(epoch_start)
+    date_series = pandas.to_datetime(dates)
+    seconds_since_epoch = (date_series - start_date).total_seconds()
+    return seconds_since_epoch.tolist()
+
 # ======================================================================
 # Class definition
 # ======================================================================
@@ -351,19 +363,20 @@ class Regressionizer(QuantileRegression):
         if isinstance(threshold, (int, float)):
             outliers = self.pick_path_points(threshold, pick_above_threshold=True, relative_errors=relative_errors).take_value()
             if not isinstance(outliers, dict):
-                TypeError("Unexpected result from pick_path_points().")
+                raise TypeError("Unexpected result from pick_path_points().")
             outliers = list(outliers.values())[0]
 
         elif outlier_identifier is not None:
             errs = self.errors(relative_errors=relative_errors).take_value()
             if not isinstance(errs, dict):
-                TypeError("Unexpected result from errors().")
-            out_pos = outlier_position(abs(list(errs.values())[0][:, 1]), lambda x: top_outliers(outlier_identifier(x)))
+                raise TypeError("Unexpected result from errors().")
+            out_pos = outlier_position(abs(numpy.array(list(errs.values())[0])[:, 1]), lambda x: top_outliers(outlier_identifier(x)))
+
             outliers = self.take_data()
             outliers = outliers[out_pos]
 
         else:
-            ValueError("""
+            raise ValueError("""
             The option \"threshold\" is expected to be None or a number (an errors threshold.).
             The argument \"outlier_identifier\" is expected to be None
             or a function that give a list of lower and upper thresholds when applied to a list of numbers (errors absolute values.)
