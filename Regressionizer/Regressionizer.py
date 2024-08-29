@@ -66,6 +66,19 @@ def _print_summary(summary):
         print("{:<12} {}".format(row, ' | '.join(f"{v:>10}" for v in values)))
 
 
+def to_datetime_index(x: (list | numpy.ndarray), epoch_start="1900-01-01", unit: str="s"):
+    """
+    Convert to DatetimeIndex
+    :param x: Data to convert.
+    :param epoch_start: Epoch to start at.
+    :param unit: Time unit for pandas.to_timedelta(...).
+    :return: pandas.DatetimeIndex
+    """
+    start_date = pandas.Timestamp(epoch_start)
+
+    xs = start_date + pandas.to_timedelta(x, unit=unit)
+    return xs
+
 # ======================================================================
 # Class definition
 # ======================================================================
