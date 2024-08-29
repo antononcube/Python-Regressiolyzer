@@ -291,6 +291,41 @@ class Regressionizer(QuantileRegression):
         return self
 
     # ------------------------------------------------------------------
+    # Pick path points
+    # ------------------------------------------------------------------
+    def pick_path_points(self, threshold, pick_above_threshold: bool = False, relative_errors:bool =False):
+        """
+        Pick points along regression quantiles (paths.)
+        :param threshold: Distance threshold to use.
+        :param pick_above_threshold: Whether to pick points above threshold.
+        :param relative_errors: Whether to pick points based relative errors.
+        :return: The instance of the Regressionizer class with a dictionary of probability to path points.
+        """
+        if threshold < 0:
+            ValueError("The first argument, threshold, is expected to be a non-negative number.")
+
+        data = self.take_data()
+
+        if not (isinstance(self.take_regression_quantiles(), dict) and len(self.take_regression_quantiles()) > 0):
+            ValueError("Cannot find regression functions.")
+
+        criteria_func = (lambda x, y: x <= y) if not pick_above_threshold else (lambda x, y: x > y)
+
+        if relative_errors:
+            res = {
+                p: [point for point in data if criteria_func(abs((qf[point[0]] - point[1]) / point[1]), threshold)]
+                for p, qf in self.take_regression_quantiles().items()
+            }
+        else:
+            res = {
+                p: [point for point in data if criteria_func(abs(qf[point[0]] - point[1]), threshold)]
+                for p, qf in self.take_regression_quantiles().items()
+            }
+
+        self._value = res
+        return self
+
+    # ------------------------------------------------------------------
     # Error plots
     # ------------------------------------------------------------------
     def errors(self, relative_errors: bool = False):
