@@ -313,12 +313,12 @@ class Regressionizer(QuantileRegression):
 
         if relative_errors:
             res = {
-                p: [point for point in data if criteria_func(abs((qf[point[0]] - point[1]) / point[1]), threshold)]
+                p: [point for point in data if criteria_func(abs((qf(point[0]) - point[1]) / point[1]), threshold)]
                 for p, qf in self.take_regression_quantiles().items()
             }
         else:
             res = {
-                p: [point for point in data if criteria_func(abs(qf[point[0]] - point[1]), threshold)]
+                p: [point for point in data if criteria_func(abs(qf(point[0]) - point[1]), threshold)]
                 for p, qf in self.take_regression_quantiles().items()
             }
 
