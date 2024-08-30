@@ -318,6 +318,24 @@ class Regressionizer(QuantileRegression):
         return self
 
     # ------------------------------------------------------------------
+    # Evaluate
+    # ------------------------------------------------------------------
+    def evaluate(self, points: (float|int|list) ):
+        """
+        Evaluate regression quantiles on the given points.
+        :param points: Points to evaluate the regression quantiles on.
+        :return: The instance of the Regressionizer class.
+        """
+        if not (isinstance(self.take_regression_quantiles(), dict) and len(self.take_regression_quantiles()) > 0):
+            ValueError("Cannot find regression functions.")
+
+        if isinstance(points, float|int):
+            return self.evaluate([points,])
+
+        self._value = {p : [qf(x) for x in points] for p, qf in self.take_regression_quantiles().items() }
+        return self
+
+    # ------------------------------------------------------------------
     # Pick path points
     # ------------------------------------------------------------------
     def pick_path_points(self, threshold, pick_above_threshold: bool = False, relative_errors:bool =False):
@@ -329,12 +347,12 @@ class Regressionizer(QuantileRegression):
         :return: The instance of the Regressionizer class with a dictionary of probability to path points.
         """
         if threshold < 0:
-            ValueError("The first argument, threshold, is expected to be a non-negative number.")
+            raise ValueError("The first argument, threshold, is expected to be a non-negative number.")
 
         data = self.take_data()
 
         if not (isinstance(self.take_regression_quantiles(), dict) and len(self.take_regression_quantiles()) > 0):
-            ValueError("Cannot find regression functions.")
+            raise ValueError("Cannot find regression functions.")
 
         criteria_func = (lambda x, y: x <= y) if not pick_above_threshold else (lambda x, y: x > y)
 
