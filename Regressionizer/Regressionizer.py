@@ -438,6 +438,36 @@ class Regressionizer(QuantileRegression):
         return self
 
     # ------------------------------------------------------------------
+    # Simulate
+    # ------------------------------------------------------------------
+    def simulate(self, points: (int|list)):
+        if isinstance(points, int):
+            min_val = numpy.min(self.take_data()[:, 0])
+            max_val = numpy.max(self.take_data()[:, 0])
+            points_list = numpy.linspace(min_val, max_val, points)
+            return self.simulate(points_list)
+
+        if not (isinstance(self.take_regression_quantiles(), dict) and len(self.take_regression_quantiles()) > 1):
+            raise ValueError("Compute two or more regression quantiles first.")
+
+        q_values = self.evaluate(points).take_value()
+
+        q_values = dict(sorted(q_values.items()))
+        qs = list(q_values.keys())
+        q_values = numpy.transpose(list(q_values.values()))
+
+        res = []
+        for i in range(len(q_values)):
+            weights = [abs(q_values[i][k + 1] - q_values[i][k]) for k in range(len(q_values[i]) - 1)]
+            rind = numpy.random.choice(len(weights), size=1, p=weights / numpy.sum(weights))
+            v = numpy.random.uniform(low=q_values[i][rind], high=q_values[i][rind + 1])
+            res.append([points[i], v[0]])
+
+        # Result
+        self._value = numpy.array(res)
+        return self
+
+    # ------------------------------------------------------------------
     # Error plots
     # ------------------------------------------------------------------
     def errors(self, relative_errors: bool = False):
