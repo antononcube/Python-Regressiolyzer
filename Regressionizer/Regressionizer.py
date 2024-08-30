@@ -329,7 +329,7 @@ class Regressionizer(QuantileRegression):
         :return: The instance of the Regressionizer class.
         """
         if not (isinstance(self.take_regression_quantiles(), dict) and len(self.take_regression_quantiles()) > 0):
-            ValueError("Cannot find regression functions.")
+            raise ValueError("Cannot find regression functions.")
 
         if isinstance(points, float | int):
             return self.evaluate([points, ])
@@ -370,6 +370,35 @@ class Regressionizer(QuantileRegression):
             }
 
         self._value = res
+        return self
+
+    # ------------------------------------------------------------------
+    # Separate
+    # ------------------------------------------------------------------
+    def separate(self, cumulative : bool = True, fractions: bool = False):
+        """
+        Separate the data with regression quantiles.
+        :param cumulative: Whether the points are cumulative or not (per probability.)
+        :param fractions: Whether to compute the fractions of the separated points.
+        :return: The instance of the Regressionizer class.
+        """
+        if not (isinstance(self.take_regression_quantiles(), dict) and len(self.take_regression_quantiles()) > 0):
+            raise ValueError("Cannot find regression functions.")
+
+        if cumulative:
+            pointGroups = {
+                p: [x for x in self.take_data() if x[1] <= qf(x[0]) ]
+                for p, qf in self.take_regression_quantiles().items() if p != "mean"
+            }
+        else:
+            raise ValueError("Non-cumulative separation is not supported yet.")
+
+        if fractions:
+            n = len(self.take_data())
+            pointGroups = { p: len(xs) / n for p, xs in pointGroups.items() }
+
+        # Result
+        self._value = pointGroups
         return self
 
     # ------------------------------------------------------------------
