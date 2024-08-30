@@ -68,7 +68,7 @@ def _print_summary(summary):
         print("{:<12} {}".format(row, ' | '.join(f"{v:>10}" for v in values)))
 
 
-def to_datetime_index(x: (list | numpy.ndarray), epoch_start="1900-01-01", unit: str="s"):
+def to_datetime_index(x: (list | numpy.ndarray), epoch_start="1900-01-01", unit: str = "s"):
     """
     Convert to DatetimeIndex
     :param x: Data to convert.
@@ -81,7 +81,8 @@ def to_datetime_index(x: (list | numpy.ndarray), epoch_start="1900-01-01", unit:
     xs = start_date + pandas.to_timedelta(x, unit=unit)
     return xs
 
-def dates_to_seconds(dates:list, epoch_start="1900-01-01"):
+
+def dates_to_seconds(dates: list, epoch_start="1900-01-01"):
     """
     Convert dates into absolute times (from a given epoch start.)
     :param dates: List of strings.
@@ -92,6 +93,7 @@ def dates_to_seconds(dates:list, epoch_start="1900-01-01"):
     date_series = pandas.to_datetime(dates)
     seconds_since_epoch = (date_series - start_date).total_seconds()
     return seconds_since_epoch.tolist()
+
 
 # ======================================================================
 # Class definition
@@ -320,7 +322,7 @@ class Regressionizer(QuantileRegression):
     # ------------------------------------------------------------------
     # Evaluate
     # ------------------------------------------------------------------
-    def evaluate(self, points: (float|int|list) ):
+    def evaluate(self, points: (float | int | list)):
         """
         Evaluate regression quantiles on the given points.
         :param points: Points to evaluate the regression quantiles on.
@@ -329,16 +331,16 @@ class Regressionizer(QuantileRegression):
         if not (isinstance(self.take_regression_quantiles(), dict) and len(self.take_regression_quantiles()) > 0):
             ValueError("Cannot find regression functions.")
 
-        if isinstance(points, float|int):
-            return self.evaluate([points,])
+        if isinstance(points, float | int):
+            return self.evaluate([points, ])
 
-        self._value = {p : [qf(x) for x in points] for p, qf in self.take_regression_quantiles().items() }
+        self._value = {p: [qf(x) for x in points] for p, qf in self.take_regression_quantiles().items()}
         return self
 
     # ------------------------------------------------------------------
     # Pick path points
     # ------------------------------------------------------------------
-    def pick_path_points(self, threshold, pick_above_threshold: bool = False, relative_errors:bool =False):
+    def pick_path_points(self, threshold, pick_above_threshold: bool = False, relative_errors: bool = False):
         """
         Pick points along regression quantiles (paths.)
         :param threshold: Distance threshold to use.
@@ -376,10 +378,11 @@ class Regressionizer(QuantileRegression):
     def find_anomalies_by_residuals(self,
                                     threshold=None,
                                     outlier_identifier=None,
-                                    relative_errors: bool=False):
+                                    relative_errors: bool = False):
         outliers = None
         if isinstance(threshold, (int, float)):
-            outliers = self.pick_path_points(threshold, pick_above_threshold=True, relative_errors=relative_errors).take_value()
+            outliers = self.pick_path_points(threshold, pick_above_threshold=True,
+                                             relative_errors=relative_errors).take_value()
             if not isinstance(outliers, dict):
                 raise TypeError("Unexpected result from pick_path_points().")
             outliers = list(outliers.values())[0]
@@ -388,7 +391,8 @@ class Regressionizer(QuantileRegression):
             errs = self.errors(relative_errors=relative_errors).take_value()
             if not isinstance(errs, dict):
                 raise TypeError("Unexpected result from errors().")
-            out_pos = outlier_position(abs(numpy.array(list(errs.values())[0])[:, 1]), lambda x: top_outliers(outlier_identifier(x)))
+            out_pos = outlier_position(abs(numpy.array(list(errs.values())[0])[:, 1]),
+                                       lambda x: top_outliers(outlier_identifier(x)))
 
             outliers = self.take_data()
             outliers = outliers[out_pos]
@@ -598,7 +602,7 @@ class Regressionizer(QuantileRegression):
         :return: The instance of the Regressionizer class.
         """
         return self.date_plot(title=title, width=width, height=height,
-                              epoch_start=epoch_start,**kwargs)
+                              epoch_start=epoch_start, **kwargs)
 
     def date_plot(self,
                   title="", width=800, height=600,
