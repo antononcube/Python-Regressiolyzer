@@ -4,6 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 from shiny import App, Inputs, Outputs, Session, reactive, render, req, ui
+#import bslib
 
 from Regressionizer import *
 from OutlierIdentifiers import *
@@ -12,26 +13,37 @@ import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
 
-sns.set_theme()
+# Dark mode
+ui.input_dark_mode()
 
-# Load the gzipped CSV file
+# Seaborn
+#plt.style.use("dark_background")
+#sns.set(style="ticks", context="talk")
+plt.style.use("dark_background")
+#sns.set_style("darkgrid")
+sns.set_theme(style="dark")
+    
+
+# Load the gzipped CSV files
+fileName = "../Regressionizer/resources/dfDistributionData.csv.zip"
+dfDistributionData = pd.read_csv(fileName, compression='zip')
+
+fileName = "../Regressionizer/resources/dfFinancialData.csv.zip"
+dfFinancialData = pd.read_csv(fileName, compression='zip')
+dfFinancialData['Time'] = pd.to_datetime(dfFinancialData['Time'], format='%Y-%m-%d')
+dfFinancialData['Time'] = dfFinancialData['Time'].apply(lambda x: x.timestamp())
+
 fileName = "../Regressionizer/resources/dfTemperatureData.csv.zip"
 dfTemperatureData = pd.read_csv(fileName, compression='zip')
 
-# Convert 'Time' column from seconds since 1900-01-01 to date objects
-#dfTemperatureData['Time'] = dfTemperatureData['Time'].apply(lambda x: datetime(1900, 1, 1) + timedelta(seconds=x))
-
-# Display the DataFrame
-print(dfTemperatureData)
-
-dfData = dfTemperatureData.to_numpy()
+dictData = {"Distribution": dfDistributionData, "Financial" : dfFinancialData, "Temperature" : dfTemperatureData}
 
 # Generic seaborn function over Regressionizer object
 def sns_plot(obj,
     title="", width=800, height=600,
     data_color: (str | None) = "grey",
     date_plot: bool = False, epoch_start="1900-01-01",
-    background_color="Gainsboro",
+    background_color="#1f1f1f",
     grid_lines=False,
     point_size=2,
     **kwargs):
@@ -56,13 +68,16 @@ def sns_plot(obj,
     # Create a matplotlib figure and axis
     fig, ax = plt.subplots(figsize=(width / 100, height / 100))
 
-    sns.set_theme()
-
     # Set background color
     ax.set_facecolor(background_color)
 
+    if grid_lines:
+        sns.set_style("darkgrid") 
+    else:    
+        sns.set_style("dark")
+
     # Plot data points
-    sns.scatterplot(x=xs, y=obj.take_data()[:, 1], color=data_color, ax=ax, size=point_size)
+    sns.scatterplot(x=xs, y=obj.take_data()[:, 1], color=data_color, ax=ax, size=point_size, linewidth=0, alpha = 1, legend=False)
 
     # Plot each regression quantile
     for i, p in enumerate(obj.take_regression_quantiles().keys()):
@@ -71,11 +86,6 @@ def sns_plot(obj,
 
     # Set title
     ax.set_title(title)
-
-    # Set the style to include grid lines
-    if grid_lines:
-        sns.set_style("whitegrid") 
-
 
     # Do not show the plot
     #plt.close(fig)
@@ -96,26 +106,17 @@ def is_float(string):
     except ValueError:
         return False
 
-# App definitions
-# app_ui = ui.page_sidebar(
-#     ui.sidebar(
-#         ui.input_slider(
-#             "knots", "Number of knots", min=2, max=100, value=10
-#         ),
-#         ui.input_slider(
-#             "prob", "Probability", min=0, max=1, value=0.5
-#         ),
-#     ),
-#     ui.card(
-#         ui.output_plot("distPlot"),
-#     ),
-# )
 
 app_ui = ui.page_fluid(
+    ui.input_dark_mode(),
+    ui.input_select(id = "dataset", label = "Data:",
+        choices=["Distribution", "Financial", "Temperature"], 
+        selected="Distribution"
+    ),
     ui.input_slider("knots", "Number of knots:", min=2, max=100, value=10),
-    #ui.input_slider("prob", "Probability:", min=0, max=1, value=0.5),
     ui.input_text("probs", "Probabilities:", "0.1, 0.5, 0.9"),
     ui.input_checkbox("gridQ", "Show grid", value=False),
+    ui.input_checkbox("datePlotQ", "Date axis", value=True),
     ui.card(
         ui.output_plot("distPlot"),
     )
@@ -128,17 +129,20 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     @render.plot
     def distPlot():
+
+        dfData = dictData.get(input.dataset()).to_numpy()
+
         obj = (
             Regressionizer(dfData)
             .quantile_regression(knots=input.knots(), probs=probs_arr(), order=3)
         )
 
         obj = sns_plot(obj,
-            title="Outliers of Orlando, FL, USA, Temperature, C",
-            date_plot=True, 
+            title="",
+            date_plot=input.datePlotQ(), 
             template=template,
             data_color=data_color,
-            #background_color = '#1F1F1F',
+            background_color = '#1F1F1F',
             grid_lines = input.gridQ(),
             point_size = 2,
             width = 800, height = 300)
