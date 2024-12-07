@@ -13,7 +13,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/antononcube/Python-Regressionizer",
     install_requires=['numpy', 'scipy', 'pandas', 'plotly', 'datetime',
-                      'QuantileRegression>=0.1.4', 'OutlierIdentifiers>=0.1.2'],
+                      'QuantileRegression>=0.1.5', 'OutlierIdentifiers>=0.1.2'],
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
